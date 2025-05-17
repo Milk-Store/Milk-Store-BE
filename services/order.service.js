@@ -1,17 +1,31 @@
 const { Order, OrderItem, Product } = require('../models');
 const { PAGINATION } = require('../constants/pagination');
-const { where } = require('sequelize');
+const { where, Op } = require('sequelize');
 
-const getAllOrders = async (page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.DEFAULT_LIMIT) => {
+const getAllOrders = async (page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.DEFAULT_LIMIT, filters = {}) => {
   try {
-    console.log("get all orders service");
-    console.log("page", page);
-    console.log("limit", limit);
-  
     const offset = (page - 1) * limit;
-    console.log("offset", offset);
-  
-    const orders = await Order.findAll({
+    
+    // Build where clause based on filters
+    const whereClause = {};
+    
+    // Filter by status if provided
+    if (filters.status) {
+      whereClause.status = filters.status;
+    }
+    
+    // Filter by date range if provided
+    if (filters.startDate && filters.endDate) {
+      whereClause.createdAt = {
+        [Op.between]: [new Date(filters.startDate), new Date(filters.endDate)]
+      };
+    }
+    
+    // Determine sort order
+    const sortOrder = filters.sortOrder === 'asc' ? 'ASC' : 'DESC';
+    
+    const { count, rows } = await Order.findAndCountAll({
+      where: whereClause,
       include: [
         {
           model: OrderItem,
@@ -24,14 +38,18 @@ const getAllOrders = async (page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.D
           ]
         }
       ],
-      order: [['createdAt', 'DESC']],
+      order: [['createdAt', sortOrder]],
       limit,
       offset
     });
-    
-    console.log("orders service", orders.length); // <- In ra số lượng đơn hàng
 
-    return orders;
+    return {
+      totalItems: count,
+      totalPages: Math.ceil(count / limit),
+      currentPage: page,
+      itemsPerPage: limit,
+      orders: rows
+    };
   } catch (error) {
     console.error("Error in getAllOrders:", error);
     throw error;
@@ -40,16 +58,12 @@ const getAllOrders = async (page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.D
 
 
 const createOrder = async ({phone, items, total}) => {
-  console.log("orderData", {phone, items, total});
   
   const order = await Order.create({phone});
-  console.log("order", order);
   
   const orderItemsWithOrderId = items.map(item => ({ ...item, order_id: order.id }));
-  console.log("orderItemsWithOrderId", orderItemsWithOrderId);
   
   const response = await OrderItem.bulkCreate(orderItemsWithOrderId);
-  console.log("response", response);
   
   // Trả về đơn hàng với các orderItems
   const createdOrder = await Order.findByPk(order.id, {
@@ -60,19 +74,13 @@ const createOrder = async ({phone, items, total}) => {
 };
 
 const updateOrder = async ({id, status}) => {
-  console.log("update order", id);
-  console.log("update order data11111", status);
   
   try {
     const currentOrder = await Order.findByPk(id);
-    console.log("currentOrder", currentOrder);
     if (!currentOrder) throw new Error('Order not found');
     
-console.log("Current order status:", currentOrder.status);
-
     currentOrder.status = status;
     const response = await currentOrder.save();
-    console.log("response", response);
     
   // Trả về đơn hàng đã cập nhật với các orderItems
   const updatedOrder = await Order.findByPk(id, {

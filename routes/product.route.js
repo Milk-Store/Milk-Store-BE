@@ -12,6 +12,8 @@ router.get("/", ApiProductController.getAll);
 router.get("/:id", ApiProductController.show);
 
 // Route với phân quyền admin
+router.get("/admin/list", auth, isAdmin, ApiProductController.getAllByAdmin);
+
 router.post(
   "/", 
   auth, 
