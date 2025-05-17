@@ -4,6 +4,38 @@ const getAllProducts = async () => {
   return await Product.findAll();
 };
 
+const getAllProductsByAdmin = async (page = 1, limit = 10, search = '', category_id = null) => {
+  const offset = (page - 1) * limit;
+  
+  const whereClause = {};
+  
+  if (search) {
+    whereClause.name = {
+      [Op.like]: `%${search}%`
+    };
+  }
+  
+  if (category_id) {
+    whereClause.category_id = category_id;
+  }
+
+  const { count, rows } = await Product.findAndCountAll({
+    where: whereClause,
+    limit: limit,
+    offset: offset,
+    order: [['createdAt', 'DESC']]
+  });
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    itemsPerPage: limit,
+    products: rows
+  };
+};
+
+
 const getProductById = async (id) => {
   return await Product.findByPk(id);
 };
@@ -32,4 +64,5 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
+  getAllProductsByAdmin
 }; 

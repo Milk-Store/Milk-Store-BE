@@ -20,6 +20,27 @@ const getAll = async (req, res) => {
   }
 };
 
+const getAllByAdmin = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+    const category_id = req.query.category_id ? parseInt(req.query.category_id) : null;
+
+    const result = await productService.getAllProductsByAdmin(page, limit, search, category_id);
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, result);
+  } catch (error) {
+    sendResponse(
+      res,
+      STATUS.SERVER_ERROR,
+      MESSAGE.ERROR.INTERNAL,
+      null,
+      false,
+      error.message
+    );
+  }
+};
+
 const create = async (req, res) => {
   try {
     const productData = { ...req.body };
@@ -124,6 +145,7 @@ const show = async (req, res) => {
 
 const ApiProductController = {
   getAll,
+  getAllByAdmin,
   create,
   update,
   remove,
