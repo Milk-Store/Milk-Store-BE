@@ -7,19 +7,26 @@
     "start": "node server.js",
     "dev": "nodemon server.js",
     "init-db": "node scripts/initialize-db.js",
-    "fix-db": "node scripts/fix-refresh-tokens.js"
+    "fix-db": "node scripts/fix-refresh-tokens.js",
+    "db:migrate": "sequelize-cli db:migrate --config config/database.js",
+    "db:migrate:undo": "sequelize-cli db:migrate:undo --config config/database.js",
+    "db:migrate:status": "sequelize-cli db:migrate:status --config config/database.js",
+    "db:seed:all": "sequelize-cli db:seed:all --config config/database.js",
+    "db:create:migration": "sequelize-cli migration:generate --name"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "dependencies": {
     "bcrypt": "^5.1.1",
+    "cloudinary": "^2.6.1",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
     "dotenv": "^16.5.0",
     "express": "^5.1.0",
     "express-validator": "^7.2.1",
     "jsonwebtoken": "^9.0.2",
+    "multer": "^1.4.5-lts.2",
     "mysql2": "^3.14.1",
     "sequelize": "^6.37.7",
     "sequelize-cli": "^6.6.3"

@@ -6,15 +6,17 @@ const auth = require("../middleware/auth");
 const { isAdmin } = require("../middleware/role");
 const { validate } = require('../middleware/validator');
 const { AUTH } = require('../constants/auth');
-
+const upload = require('../utils/multer');
 // Route public
 router.get("/", ApiProductController.getAll);
+router.get("/:id", ApiProductController.show);
 
 // Route với phân quyền admin
 router.post(
   "/", 
   auth, 
   isAdmin, 
+  upload.single('image'),
   [
     body('name').notEmpty().withMessage('Tên sản phẩm là bắt buộc'),
     body('price').isFloat({ min: 0 }).withMessage('Giá phải là số dương'),
@@ -28,6 +30,7 @@ router.put(
   "/:id", 
   auth, 
   isAdmin, 
+  upload.single('image'),
   [
     body('name').optional().notEmpty().withMessage('Tên sản phẩm không được để trống'),
     body('price').optional().isFloat({ min: 0 }).withMessage('Giá phải là số dương'),
