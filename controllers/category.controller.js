@@ -6,6 +6,7 @@ const { STATUS } = require("../constants/httpStatusCodes");
 const getAll = async (req, res) => {
   try {
     const categories = await categoryService.getAllCategories();
+    
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, categories);
   } catch (error) {
     sendResponse(

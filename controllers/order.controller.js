@@ -6,11 +6,19 @@ const { PAGINATION } = require('../constants/pagination');
 
 const getAll = async (req, res) => {
   try {
+    console.log("get all orders");
+    
     const page = parseInt(req.query.page) || PAGINATION.DEFAULT_PAGE;
     const limit = parseInt(req.query.limit) || PAGINATION.DEFAULT_LIMIT;
+    console.log("page", page);
+    console.log("limit", limit);
+    
     const orders = await orderService.getAllOrders(page, limit);
+    console.log("orders count", orders.length);
+    
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, orders);
   } catch (error) {
+    console.error("Controller error:", error);
     sendResponse(
       res,
       STATUS.SERVER_ERROR,
@@ -23,9 +31,12 @@ const getAll = async (req, res) => {
 };
 
 const create = async (req, res) => {
+      console.log("orderData", req.body);
+
   try {
-    const { orderData, orderItems } = req.body;
-    const order = await orderService.createOrder(orderData, orderItems);
+    const { phone, items, total } = req.body;
+    
+    const order = await orderService.createOrder({phone, items, total});
     sendResponse(res, STATUS.CREATED, MESSAGE.SUCCESS.CREATED, order);
   } catch (error) {
     sendResponse(
@@ -41,9 +52,13 @@ const create = async (req, res) => {
 
 const update = async (req, res) => {
   try {
+    console.log("update order", req.params.id);
+    console.log("update order data", req.body);
+    
+    
     const updatedOrder = await orderService.updateOrder(
-      req.params.id,
-      req.body
+      {id: req.params.id,
+      status: req.body.status,}
     );
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.UPDATED, updatedOrder);
   } catch (error) {

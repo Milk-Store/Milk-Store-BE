@@ -33,6 +33,8 @@ const clearTokenCookies = (res) => {
 const login = async (req, res) => {
   try {
     const { email, password } = req.body;
+    console.log('Login attempt:', email, password ? '******' : 'no password');
+    
     if (!email || !password) {
       return sendResponse(
         res,
@@ -44,15 +46,27 @@ const login = async (req, res) => {
     }
 
     const authData = await authService.login(email, password);
+    console.log("authData received");
     
     // Lưu token vào cookies
     setTokenCookies(res, authData.accessToken, authData.refreshToken);
     
-    // Chỉ trả về thông tin user, không trả về token
+    // Kiểm tra User-Agent để phát hiện mobile client
+    const userAgent = req.headers['user-agent'] || '';
+    const isMobile = userAgent.includes('ReactNative') || 
+                    req.headers['x-client-type'] === 'mobile';
+    
+    console.log('User-Agent:', userAgent);
+    console.log('Is mobile client:', isMobile);
+    
+    // Trả về thông tin user và token nếu là mobile client
+    // Trả về cả accessToken để client mobile có thể sử dụng token dễ dàng
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.LOGIN_SUCCESS, {
-      user: authData.user
+      user: authData.user,
+      accessToken: isMobile ? authData.accessToken : undefined
     });
   } catch (error) {
+    console.log('Login error:', error.message);
     sendResponse(
       res,
       STATUS.UNAUTHORIZED,
@@ -95,8 +109,13 @@ const logout = async (req, res) => {
 
 const refresh = async (req, res) => {
   try {
-    // Lấy refresh token từ cookies
-    const refreshToken = req.cookies[AUTH.COOKIES.REFRESH_TOKEN];
+    // Lấy refresh token từ cookies hoặc từ body
+    let refreshToken = req.cookies[AUTH.COOKIES.REFRESH_TOKEN];
+    
+    // Nếu không có trong cookie, kiểm tra trong body (cho mobile client)
+    if (!refreshToken && req.body.refreshToken) {
+      refreshToken = req.body.refreshToken;
+    }
     
     if (!refreshToken) {
       return sendResponse(
@@ -113,7 +132,15 @@ const refresh = async (req, res) => {
     // Cập nhật cookies với token mới
     setTokenCookies(res, tokens.accessToken, tokens.refreshToken);
     
-    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.TOKEN_REFRESHED);
+    // Kiểm tra User-Agent để phát hiện mobile client
+    const userAgent = req.headers['user-agent'] || '';
+    const isMobile = userAgent.includes('ReactNative') || 
+                    req.headers['x-client-type'] === 'mobile';
+    
+    // Trả về token trong response
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.TOKEN_REFRESHED, 
+      isMobile ? { accessToken: tokens.accessToken, refreshToken: tokens.refreshToken } : undefined
+    );
   } catch (error) {
     // Nếu refresh thất bại, xóa cookies
     clearTokenCookies(res);
