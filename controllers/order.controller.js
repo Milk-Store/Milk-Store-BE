@@ -34,9 +34,9 @@ const getAll = async (req, res) => {
 
 const create = async (req, res) => {
   try {
-    const { phone, items, total } = req.body;
+    const { phone, name, items, total } = req.body;
     
-    const order = await orderService.createOrder({phone, items, total});
+    const order = await orderService.createOrder({phone, name, items, total});
     sendResponse(res, STATUS.CREATED, MESSAGE.SUCCESS.CREATED, order);
   } catch (error) {
     sendResponse(
