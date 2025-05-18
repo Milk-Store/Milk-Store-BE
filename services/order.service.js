@@ -57,9 +57,9 @@ const getAllOrders = async (page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.D
 };
 
 
-const createOrder = async ({phone, items, total}) => {
+const createOrder = async ({phone, name, items, total}) => {
   
-  const order = await Order.create({phone});
+  const order = await Order.create({phone, name});
   
   const orderItemsWithOrderId = items.map(item => ({ ...item, order_id: order.id }));
   
