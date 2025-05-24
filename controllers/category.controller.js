@@ -19,7 +19,27 @@ const getAll = async (req, res) => {
       MESSAGE.ERROR.INTERNAL,
       null,
       false,
-      error.message
+      true
+    );
+  }
+};
+
+const getAllByAdmin = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const search = req.query.search || '';
+
+    const result = await categoryService.getAllCategoriesByAdmin(page, limit, search);
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, result);
+  } catch (error) {
+    sendResponse(
+      res,
+      STATUS.SERVER_ERROR,
+      MESSAGE.ERROR.INTERNAL,
+      null,
+      false,
+      true
     );
   }
 };
@@ -45,7 +65,7 @@ const create = async (req, res) => {
       MESSAGE.ERROR.INTERNAL,
       null,
       false,
-      error.message
+      true
     );
   }
 };
@@ -85,7 +105,7 @@ const update = async (req, res) => {
       MESSAGE.ERROR.INTERNAL,
       null,
       false,
-      error.message
+      true
     );
   }
 };
@@ -101,7 +121,7 @@ const remove = async (req, res) => {
       MESSAGE.ERROR.INTERNAL,
       null,
       false,
-      error.message
+      true
     );
   }
 };
@@ -111,6 +131,7 @@ const ApiCategoryController = {
   create,
   update,
   remove,
+  getAllByAdmin
 };
 
 module.exports = ApiCategoryController;

@@ -10,6 +10,8 @@ const { BASE_ENDPOINT } = require('../constants/endpoints')
 // Route public
 router.get(BASE_ENDPOINT.BASE, ApiCategoryController.getAll);
 
+router.get(BASE_ENDPOINT.ADMIN_LIST, auth, isAdmin, ApiCategoryController.getAllByAdmin);
+
 // Route với phân quyền admin
 router.post(
  BASE_ENDPOINT.BASE, 
