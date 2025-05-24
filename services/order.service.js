@@ -27,8 +27,36 @@ const getAllOrders = async () => {
   }
 };
 
+const getAllOrdersByAdmin = async ({
+  page = 1,
+  limit = 10,
+  status = '',
+  sort = 'ASC' // mặc định: sớm đến trễ
+}) => {
+  const offset = (page - 1) * limit;
+  const whereClause = {};
+
+  if (status) {
+    whereClause.status = status;
+  }
+
+  const { count, rows } = await Order.findAndCountAll({
+    where: whereClause,
+    limit,
+    offset,
+    order: [['createdAt', sort.toUpperCase()]] // ASC hoặc DESC
+  });
+
+  return {
+    totalItems: count,
+    totalPages: Math.ceil(count / limit),
+    currentPage: page,
+    itemsPerPage: limit,
+    orders: rows
+  };
+};
+
 const createOrder = async ({phone, name, items, total}) => {
-  console.log(phone, name, items, total);
   const order = await Order.create({phone, name, total});
   
   const orderItemsWithOrderId = items.map(item => ({ ...item, order_id: order.id }));
@@ -80,4 +108,5 @@ module.exports = {
   createOrder,
   updateOrder,
   deleteOrder,
+  getAllOrdersByAdmin
 }; 

@@ -21,6 +21,27 @@ const getAll = async (req, res) => {
   }
 };
 
+const getAllByAdmin = async (req, res) => {
+  try {
+    const page = parseInt(req.query.page) || 1;
+    const limit = parseInt(req.query.limit) || 10;
+    const status = req.query.status || null;
+
+
+    const result = await orderService.getAllOrdersByAdmin(page, limit, search);
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, result);
+  } catch (error) {
+    sendResponse(
+      res,
+      STATUS.SERVER_ERROR,
+      MESSAGE.ERROR.INTERNAL,
+      null,
+      false,
+      true
+    );
+  }
+};
+
 const create = async (req, res) => {
   try {
     const { phone, items, total } = req.body;
@@ -79,6 +100,7 @@ const ApiOrderController = {
   create,
   update,
   remove,
+  getAllByAdmin
 };
 
 module.exports = ApiOrderController; 

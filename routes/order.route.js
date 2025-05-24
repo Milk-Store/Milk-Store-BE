@@ -7,6 +7,8 @@ const { BASE_ENDPOINT } = require('../constants/endpoints')
 // Lấy danh sách order (admin xem tất cả, user chỉ xem của mình)
 router.get(BASE_ENDPOINT.BASE, auth, isAdmin, ApiOrderController.getAll);
 
+router.get(BASE_ENDPOINT.ADMIN_LIST, auth, isAdmin, ApiOrderController.getAllByAdmin)
+
 // Tạo order (user đã đăng nhập hoặc không)
 router.post(
   BASE_ENDPOINT.BASE, 
