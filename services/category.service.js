@@ -1,3 +1,4 @@
+const { Op } = require('sequelize');
 const { Category } = require('../models');
 
 const getAllCategories = async () => {
