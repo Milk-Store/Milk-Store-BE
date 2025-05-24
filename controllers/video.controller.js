@@ -1,32 +1,30 @@
-const orderService = require("../services/order.service");
+const videoService = require("../services/video.service");
 const sendResponse = require("../utils/responseFormatter");
 const { MESSAGE } = require("../constants/messages");
 const { STATUS } = require("../constants/httpStatusCodes");
-const { PAGINATION } = require('../constants/pagination');
 
 const getAll = async (req, res) => {
   try {
-    const result = await orderService.getAllOrders();
-    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, result);
+    const videos = await videoService.getAllVideos();
+
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, videos);
   } catch (error) {
-    console.error("Controller error:", error);
     sendResponse(
       res,
       STATUS.SERVER_ERROR,
       MESSAGE.ERROR.INTERNAL,
       null,
       false,
-      error.message
+      true
     );
   }
 };
 
 const create = async (req, res) => {
   try {
-    const { phone, items, total } = req.body;
-    const name = "Khách hàng";
-    const order = await orderService.createOrder({phone, name, items, total});
-    sendResponse(res, STATUS.CREATED, MESSAGE.SUCCESS.CREATED, order);
+    const videoData = { ...req.body };
+    const video = await videoService.createVideo(videoData);
+    sendResponse(res, STATUS.CREATED, MESSAGE.SUCCESS.CREATED, video);
   } catch (error) {
     sendResponse(
       res,
@@ -34,18 +32,21 @@ const create = async (req, res) => {
       MESSAGE.ERROR.INTERNAL,
       null,
       false,
-      error.message
+      true
     );
   }
 };
 
 const update = async (req, res) => {
-  try {    
-    const updatedOrder = await orderService.updateOrder(
-      {id: req.params.id,
-      status: req.body.status,}
+  try {
+    const videoId = req.params.id;
+    const videoData = { ...req.body };
+
+    const updatedVideo = await videoService.updateVideo(
+      videoId,
+      videoData
     );
-    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.UPDATED, updatedOrder);
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.UPDATED, updatedVideo);
   } catch (error) {
     sendResponse(
       res,
@@ -53,14 +54,14 @@ const update = async (req, res) => {
       MESSAGE.ERROR.INTERNAL,
       null,
       false,
-      error.message
+      true
     );
   }
 };
 
 const remove = async (req, res) => {
   try {
-    await orderService.deleteOrder(req.params.id);
+    await videoService.deleteVideo(req.params.id);
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.DELETED);
   } catch (error) {
     sendResponse(
@@ -69,16 +70,16 @@ const remove = async (req, res) => {
       MESSAGE.ERROR.INTERNAL,
       null,
       false,
-      error.message
+      true
     );
   }
 };
 
-const ApiOrderController = {
+const ApiVideoController = {
   getAll,
   create,
   update,
   remove,
 };
 
-module.exports = ApiOrderController; 
+module.exports = ApiVideoController;

@@ -26,6 +26,13 @@ const MESSAGE = {
     TOKEN_EXPIRED: "Token đã hết hạn. Vui lòng làm mới token.",
     EMAIL_PASSWORD_REQUIRED: "Email và mật khẩu là bắt buộc."
   },
+  VALIDATION: {
+    REQUIRED: (field) => `${field} là bắt buộc.`,
+    INVALID: (field) => `${field} không hợp lệ`,
+    MUST_BE_POSITIVE_NUMBER: (field) => `${field} phải là số dương.`,
+    MIN_LENGTH: (field, min) => `${field} phải có ít nhất ${min} ký tự.`,
+    MAX_LENGTH: (field, max) => `${field} không được vượt quá ${max} ký tự.`,
+  }
 };
 
 module.exports = { MESSAGE };

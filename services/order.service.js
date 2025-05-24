@@ -2,30 +2,9 @@ const { Order, OrderItem, Product } = require('../models');
 const { PAGINATION } = require('../constants/pagination');
 const { where, Op } = require('sequelize');
 
-const getAllOrders = async (page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.DEFAULT_LIMIT, filters = {}) => {
+const getAllOrders = async () => {
   try {
-    const offset = (page - 1) * limit;
-    
-    // Build where clause based on filters
-    const whereClause = {};
-    
-    // Filter by status if provided
-    if (filters.status) {
-      whereClause.status = filters.status;
-    }
-    
-    // Filter by date range if provided
-    if (filters.startDate && filters.endDate) {
-      whereClause.createdAt = {
-        [Op.between]: [new Date(filters.startDate), new Date(filters.endDate)]
-      };
-    }
-    
-    // Determine sort order
-    const sortOrder = filters.sortOrder === 'asc' ? 'ASC' : 'DESC';
-    
-    const { count, rows } = await Order.findAndCountAll({
-      where: whereClause,
+    const orders = await Order.findAll({
       include: [
         {
           model: OrderItem,
@@ -38,28 +17,19 @@ const getAllOrders = async (page = PAGINATION.DEFAULT_PAGE, limit = PAGINATION.D
           ]
         }
       ],
-      order: [['createdAt', sortOrder]],
-      limit,
-      offset
+      order: [['createdAt', 'DESC']]
     });
 
-    return {
-      totalItems: count,
-      totalPages: Math.ceil(count / limit),
-      currentPage: page,
-      itemsPerPage: limit,
-      orders: rows
-    };
+    return orders;
   } catch (error) {
     console.error("Error in getAllOrders:", error);
     throw error;
   }
 };
 
-
 const createOrder = async ({phone, name, items, total}) => {
-  
-  const order = await Order.create({phone, name});
+  console.log(phone, name, items, total);
+  const order = await Order.create({phone, name, total});
   
   const orderItemsWithOrderId = items.map(item => ({ ...item, order_id: order.id }));
   

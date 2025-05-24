@@ -3,24 +3,25 @@ const router = express.Router();
 const { body } = require('express-validator');
 const ApiAuthController = require("../controllers/auth.controller");
 const { validate } = require('../middleware/validator');
-
+const { MESSAGE } = require('../constants/messages')
+const { AUTH } = require('../constants/endpoints')
 // Đăng nhập - thêm validation
 router.post(
-  "/login", 
+  AUTH.LOGIN, 
   [
-    body('email').isEmail().withMessage('Email không hợp lệ'),
-    body('password').notEmpty().withMessage('Mật khẩu là bắt buộc')
+    body('email').isEmail().withMessage(MESSAGE.VALIDATION.INVALID('Email')),
+    body('password').notEmpty().withMessage(MESSAGE.VALIDATION.REQUIRED('Mật khẩu'))
   ],
   validate,
   ApiAuthController.login
 );
 
 // Đăng xuất
-router.post("/logout", ApiAuthController.logout);
+router.post(AUTH.LOGOUT, ApiAuthController.logout);
 
 // Làm mới token
 router.post(
-  "/refresh",
+  AUTH.REFRESH,
   [
     body('refreshToken').optional()
   ],

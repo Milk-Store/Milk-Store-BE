@@ -46,7 +46,6 @@ const login = async (req, res) => {
     }
 
     const authData = await authService.login(email, password);
-    console.log("authData received");
     
     // Lưu token vào cookies
     setTokenCookies(res, authData.accessToken, authData.refreshToken);

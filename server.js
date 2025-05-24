@@ -17,7 +17,9 @@ const allowedOrigins = [
   process.env.URL_CLIENT_BASE_PROD,      // Web production
   process.env.URL_EXPO_DEV,     // Expo dev
   process.env.URL_EXPO_GO, 
-  "http://192.168.1.235:8081"     // Expo Go
+  "http://192.168.1.148:8081",
+  "http://192.168.1.235:8081",    
+    // Expo Go
   // Không cần thêm gì cho app đã build – vì nó không gửi origin
 ].filter(Boolean);
 

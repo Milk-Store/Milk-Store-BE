@@ -8,13 +8,14 @@ const orderRoute = require("./order.route");
 const productRoute = require("./product.route");
 const authRoute = require("./auth.route");
 const analyticsRoute = require("./analytics.route");
+const { BASE_ENDPOINT } = require("../constants/endpoints");
 
-router.use("/categories", categoryRoute);
-router.use("/refresh", refreshRoute);
-router.use("/users", userRoute);
-router.use("/orders", orderRoute);
-router.use("/products", productRoute);
-router.use("/auth", authRoute);
-router.use("/analytics", analyticsRoute);
+router.use(BASE_ENDPOINT.CATEGORY, categoryRoute);
+router.use(BASE_ENDPOINT.REFRESH, refreshRoute);
+router.use(BASE_ENDPOINT.USER, userRoute);
+router.use(BASE_ENDPOINT.ORDER, orderRoute);
+router.use(BASE_ENDPOINT.PRODUCT, productRoute);
+router.use(BASE_ENDPOINT.AUTH, authRoute);
+router.use(BASE_ENDPOINT.ANALYTICS, analyticsRoute);
 
 module.exports = router;

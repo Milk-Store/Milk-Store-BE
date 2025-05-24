@@ -4,6 +4,10 @@ const getAllCategories = async () => {
   return await Category.findAll();
 };
 
+const getCategoryById = async (id) => {
+  return await Category.findByPk(id);
+};
+
 const createCategory = async (categoryData) => {
   return await Category.create(categoryData);
 };
@@ -27,4 +31,5 @@ module.exports = {
   createCategory,
   updateCategory,
   deleteCategory,
+  getCategoryById,
 };
