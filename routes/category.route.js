@@ -5,33 +5,34 @@ const ApiCategoryController = require("../controllers/category.controller");
 const auth = require("../middleware/auth");
 const { isAdmin } = require("../middleware/role");
 const { validate } = require('../middleware/validator');
-
+const { MESSAGE } = require('../constants/messages')
+const { BASE_ENDPOINT } = require('../constants/endpoints')
 // Route public
-router.get("/", ApiCategoryController.getAll);
+router.get(BASE_ENDPOINT.BASE, ApiCategoryController.getAll);
 
 // Route với phân quyền admin
 router.post(
-  "/", 
+ BASE_ENDPOINT.BASE, 
   auth, 
   isAdmin, 
   [
-    body('name').notEmpty().withMessage('Tên danh mục là bắt buộc')
+    body('name').notEmpty().withMessage(MESSAGE.VALIDATION.REQUIRED('Tên danh mục'))
   ],
   validate,
   ApiCategoryController.create
 );
 
 router.put(
-  "/:id", 
+  BASE_ENDPOINT.BY_ID, 
   auth, 
   isAdmin, 
   [
-    body('name').notEmpty().withMessage('Tên danh mục là bắt buộc')
+    body('name').notEmpty().withMessage(MESSAGE.VALIDATION.REQUIRED('Tên danh mục'))
   ],
   validate,
   ApiCategoryController.update
 );
 
-router.delete("/:id", auth, isAdmin, ApiCategoryController.remove);
+router.delete(BASE_ENDPOINT.BY_ID, auth, isAdmin, ApiCategoryController.remove);
 
 module.exports = router;

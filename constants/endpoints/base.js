@@ -1,0 +1,18 @@
+module.exports = {
+  BASE: "/",
+  BY_ID: "/:id",
+  AUTH: "/auth",
+  CATEGORY: "/categories",
+  PRODUCT: "/products",
+  USER: "/users",
+  ORDER: "/orders",
+  REFRESH: "/refresh",
+  ANALYTICS: "/analytics",
+  SLIDER: "/sliders",
+  VIDEO: "/videos",
+  REFRESH: "/refresh",
+  ADMIN_LIST: "/admin/list",
+  USER_ONLY: "/user",
+  EXPIRED: "expired",
+  REGISTER: "/register",
+};

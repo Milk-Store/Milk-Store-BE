@@ -3,13 +3,13 @@ const router = express.Router();
 const ApiOrderController = require("../controllers/order.controller");
 const auth = require("../middleware/auth");
 const { isAdmin } = require("../middleware/role");
-
+const { BASE_ENDPOINT } = require('../constants/endpoints')
 // Lấy danh sách order (admin xem tất cả, user chỉ xem của mình)
-router.get("/", auth, isAdmin, ApiOrderController.getAll);
+router.get(BASE_ENDPOINT.BASE, auth, isAdmin, ApiOrderController.getAll);
 
 // Tạo order (user đã đăng nhập hoặc không)
 router.post(
-  "/", 
+  BASE_ENDPOINT.BASE, 
   ApiOrderController.create
 );
 
