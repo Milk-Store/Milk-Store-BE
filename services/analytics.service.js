@@ -1,79 +1,106 @@
 const { Order, OrderItem, Product } = require('../models');
-const { Op } = require('sequelize');
+const { Op, fn, col } = require('sequelize');
 const sequelize = require('sequelize');
 
-const getDashboardOverview = async () => {
+const getDashboardOverview = async ({ fromDate, toDate, year } = {}) => {
   try {
-    // Tổng doanh thu từ đơn hàng completed
-    const totalRevenue = await Order.sum('total', {
-      where: { status: 'completed' }
+    let dateFilter = {};
+
+    // ✅ Nếu có truyền year → dùng year
+    if (year) {
+      const start = new Date(`${year}-01-01`);
+      const end = new Date(`${year}-12-31T23:59:59`);
+      dateFilter = { createdAt: { [Op.between]: [start, end] } };
+    }
+
+    // ✅ Nếu có truyền fromDate và toDate → dùng khoảng thời gian đó
+    else if (fromDate && toDate) {
+      const start = new Date(fromDate);
+      const end = new Date(toDate);
+      end.setHours(23, 59, 59, 999);
+      dateFilter = { createdAt: { [Op.between]: [start, end] } };
+    }
+
+    // ✅ Mặc định: từ đầu đến cuối tháng hiện tại
+    else {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth(), 1);
+      const end = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999); // cuối tháng
+      dateFilter = { createdAt: { [Op.between]: [start, end] } };
+    }
+
+    const totalRevenue = await Order.sum("total", {
+      where: {
+        status: "completed",
+        ...dateFilter,
+      },
     });
 
-    // Tổng số đơn hàng
-    const totalOrders = await Order.count();
+    const totalOrders = await Order.count({
+      where: {
+        ...dateFilter,
+      },
+    });
 
-    // Tổng số sản phẩm
     const totalProducts = await Product.count();
 
-    // Số đơn hàng đang chờ xử lý
     const pendingOrders = await Order.count({
-      where: { status: 'pending' }
+      where: {
+        status: "pending",
+        ...dateFilter,
+      },
     });
 
     return {
       totalRevenue: totalRevenue || 0,
       totalOrders,
       totalProducts,
-      pendingOrders
+      pendingOrders,
     };
   } catch (error) {
     throw error;
   }
 };
 
-const getOrderStatistics = async (period = '7days') => {
+const getOrderStatistics = async ({ fromDate, toDate, year } = {}) => {
   try {
-    let startDate;
-    const endDate = new Date();
+    let startDate, endDate;
 
-    // Xác định khoảng thời gian
-    switch (period) {
-      case '7days':
-        startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 7);
-        break;
-      case '30days':
-        startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 30);
-        break;
-      case 'currentMonth':
-        startDate = new Date(endDate.getFullYear(), endDate.getMonth(), 1);
-        break;
-      default:
-        startDate = new Date(endDate);
-        startDate.setDate(startDate.getDate() - 7);
+    const now = new Date();
+
+    if (year) {
+      // Thống kê theo cả năm
+      startDate = new Date(`${year}-01-01`);
+      endDate = new Date(`${year}-12-31T23:59:59`);
+    } else if (fromDate && toDate) {
+      // Theo khoảng ngày cụ thể
+      startDate = new Date(fromDate);
+      endDate = new Date(toDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Mặc định: từ đầu đến cuối tháng hiện tại
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
     }
 
-    // Lấy dữ liệu đơn hàng theo ngày
     const dailyOrders = await Order.findAll({
       attributes: [
-        [sequelize.fn('DATE', sequelize.col('createdAt')), 'date'],
-        [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-        [sequelize.fn('SUM', sequelize.col('total')), 'revenue']
+        [fn('DATE', col('createdAt')), 'date'],
+        [fn('COUNT', col('id')), 'count'],
+        [fn('SUM', col('total')), 'revenue']
       ],
       where: {
         createdAt: {
           [Op.between]: [startDate, endDate]
         }
       },
-      group: [sequelize.fn('DATE', sequelize.col('createdAt'))],
-      order: [[sequelize.fn('DATE', sequelize.col('createdAt')), 'ASC']]
+      group: [fn('DATE', col('createdAt'))],
+      order: [[fn('DATE', col('createdAt')), 'ASC']]
     });
 
-    // Format dữ liệu cho Chart.js
     const labels = dailyOrders.map(order => order.getDataValue('date'));
-    const orderCounts = dailyOrders.map(order => order.getDataValue('count'));
-    const revenues = dailyOrders.map(order => order.getDataValue('revenue') || 0);
+    const orderCounts = dailyOrders.map(order => parseInt(order.getDataValue('count')));
+    const revenues = dailyOrders.map(order => parseFloat(order.getDataValue('revenue') || 0));
 
     return {
       labels,
@@ -97,29 +124,49 @@ const getOrderStatistics = async (period = '7days') => {
   }
 };
 
-const getOrderStatusStatistics = async () => {
+const getOrderStatusStatistics = async ({ fromDate, toDate, year } = {}) => {
   try {
+    let startDate, endDate;
+    const now = new Date();
+
+    if (year) {
+      startDate = new Date(`${year}-01-01`);
+      endDate = new Date(`${year}-12-31T23:59:59`);
+    } else if (fromDate && toDate) {
+      startDate = new Date(fromDate);
+      endDate = new Date(toDate);
+      endDate.setHours(23, 59, 59, 999);
+    } else {
+      // Mặc định: tháng hiện tại
+      startDate = new Date(now.getFullYear(), now.getMonth(), 1);
+      endDate = new Date(now.getFullYear(), now.getMonth() + 1, 0, 23, 59, 59, 999);
+    }
+
     const statusCounts = await Order.findAll({
       attributes: [
         'status',
-        [sequelize.fn('COUNT', sequelize.col('id')), 'count']
+        [fn('COUNT', col('id')), 'count']
       ],
+      where: {
+        createdAt: {
+          [Op.between]: [startDate, endDate]
+        }
+      },
       group: ['status']
     });
 
-    // Format dữ liệu cho Chart.js
     const labels = statusCounts.map(item => item.status);
-    const data = statusCounts.map(item => item.getDataValue('count'));
+    const data = statusCounts.map(item => parseInt(item.getDataValue('count')));
 
     return {
       labels,
       datasets: [{
         data,
         backgroundColor: [
-          'rgb(255, 99, 132)',
-          'rgb(54, 162, 235)',
-          'rgb(255, 205, 86)',
-          'rgb(75, 192, 192)'
+          'rgb(255, 99, 132)',   // pending
+          'rgb(54, 162, 235)',   // processing
+          'rgb(255, 205, 86)',   // completed
+          'rgb(75, 192, 192)'    // cancelled, etc.
         ]
       }]
     };

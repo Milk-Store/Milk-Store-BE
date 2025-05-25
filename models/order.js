@@ -18,6 +18,7 @@ module.exports = (sequelize, DataTypes) => {
     }
   }
   Order.init({
+    name: DataTypes.STRING,
     phone: DataTypes.STRING,
     status: DataTypes.ENUM('pending', 'processing', 'completed', 'cancel'),
     total: DataTypes.DECIMAL(10, 0),

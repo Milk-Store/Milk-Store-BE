@@ -25,10 +25,10 @@ const getAllByAdmin = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
     const limit = parseInt(req.query.limit) || 10;
-    const status = req.query.status || null;
+    const search = req.query.search || null;
+    const sort = req.query.sort || 'ASC';
 
-
-    const result = await orderService.getAllOrdersByAdmin(page, limit, search);
+    const result = await orderService.getAllOrdersByAdmin({page, limit, search, sort});
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, result);
   } catch (error) {
     sendResponse(
@@ -46,7 +46,17 @@ const create = async (req, res) => {
   try {
     const { phone, items, total } = req.body;
     const name = "Khách hàng";
-    const order = await orderService.createOrder({phone, name, items, total});
+    
+    // Lấy io instance và adminSockets từ app
+    const io = req.app.get('io');
+    const adminSockets = req.app.get('adminSockets');
+    
+    const order = await orderService.createOrder(
+      {phone, name, items, total},
+      io,
+      adminSockets
+    );
+    
     sendResponse(res, STATUS.CREATED, MESSAGE.SUCCESS.CREATED, order);
   } catch (error) {
     sendResponse(

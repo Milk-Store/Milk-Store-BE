@@ -32,7 +32,7 @@ const clearTokenCookies = (res) => {
 
 const login = async (req, res) => {
   try {
-    const { email, password } = req.body;
+    const { email, password, pushToken } = req.body;
     console.log('Login attempt:', email, password ? '******' : 'no password');
     
     if (!email || !password) {
@@ -45,7 +45,7 @@ const login = async (req, res) => {
       );
     }
 
-    const authData = await authService.login(email, password);
+    const authData = await authService.login(email, password, pushToken);
     
     // Lưu token vào cookies
     setTokenCookies(res, authData.accessToken, authData.refreshToken);
@@ -55,11 +55,7 @@ const login = async (req, res) => {
     const isMobile = userAgent.includes('ReactNative') || 
                     req.headers['x-client-type'] === 'mobile';
     
-    console.log('User-Agent:', userAgent);
-    console.log('Is mobile client:', isMobile);
-    
     // Trả về thông tin user và token nếu là mobile client
-    // Trả về cả accessToken để client mobile có thể sử dụng token dễ dàng
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.LOGIN_SUCCESS, {
       user: authData.user,
       accessToken: isMobile ? authData.accessToken : undefined
@@ -79,26 +75,18 @@ const login = async (req, res) => {
 
 const logout = async (req, res) => {
   try {
-    // Lấy refresh token từ cookies
-    const refreshToken = req.cookies[AUTH.COOKIES.REFRESH_TOKEN];
-    
-    if (refreshToken) {
-      // Đánh dấu token đã sử dụng trong database
-      await authService.logout(refreshToken);
-    }
+    const userId = req.user.id;
+    await authService.logout(userId);
     
     // Xóa cookies
     clearTokenCookies(res);
     
-    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.LOGOUT_SUCCESS);
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.LOGOUT);
   } catch (error) {
-    // Vẫn xóa cookies ngay cả khi có lỗi
-    clearTokenCookies(res);
-    
     sendResponse(
       res,
-      STATUS.BAD_REQUEST,
-      error.message || MESSAGE.ERROR.INTERNAL,
+      STATUS.SERVER_ERROR,
+      MESSAGE.ERROR.INTERNAL,
       null,
       false,
       error.message

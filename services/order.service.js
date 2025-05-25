@@ -1,6 +1,7 @@
 const { Order, OrderItem, Product } = require('../models');
 const { PAGINATION } = require('../constants/pagination');
 const { where, Op } = require('sequelize');
+const notificationService = require('./notification.service');
 
 const getAllOrders = async () => {
   try {
@@ -42,6 +43,18 @@ const getAllOrdersByAdmin = async ({
 
   const { count, rows } = await Order.findAndCountAll({
     where: whereClause,
+    include: [
+      {
+        model: OrderItem,
+        as: 'orderItems',
+        include: [
+          {
+            model: Product,
+            as: 'product'
+          }
+        ]
+      }
+    ],
     limit,
     offset,
     order: [['createdAt', sort.toUpperCase()]] // ASC hoặc DESC
@@ -56,7 +69,8 @@ const getAllOrdersByAdmin = async ({
   };
 };
 
-const createOrder = async ({phone, name, items, total}) => {
+
+const createOrder = async ({phone, name, items, total}, io, adminSockets) => {
   const order = await Order.create({phone, name, total});
   
   const orderItemsWithOrderId = items.map(item => ({ ...item, order_id: order.id }));
@@ -65,8 +79,39 @@ const createOrder = async ({phone, name, items, total}) => {
   
   // Trả về đơn hàng với các orderItems
   const createdOrder = await Order.findByPk(order.id, {
-    include: [{ model: OrderItem, as: 'orderItems' }]
+    include: [{ 
+      model: OrderItem, 
+      as: 'orderItems',
+      include: [
+        {
+          model: Product,
+          as: 'product'
+        }
+      ]
+    }]
   });
+
+  // Gửi thông báo cho tất cả admin đang online qua Socket.IO
+  if (io && adminSockets) {
+    const notification = {
+      type: 'NEW_ORDER',
+      message: 'Có đơn hàng mới!',
+      order: {
+        id: createdOrder.id,
+        phone: createdOrder.phone,
+        total: createdOrder.total,
+        createdAt: createdOrder.createdAt
+      }
+    };
+
+    // Gửi thông báo cho tất cả admin sockets
+    adminSockets.forEach(socket => {
+      socket.emit('notification', notification);
+    });
+  }
+
+  // Gửi push notification cho các admin không online
+  await notificationService.sendNewOrderNotification(createdOrder);
   
   return createdOrder;
 };

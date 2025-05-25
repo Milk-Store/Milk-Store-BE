@@ -5,7 +5,14 @@ const { STATUS } = require("../constants/httpStatusCodes");
 
 const getDashboardOverview = async (req, res) => {
   try {
-    const overview = await analyticsService.getDashboardOverview();
+    const { fromDate, toDate, year } = req.query;
+
+    const overview = await analyticsService.getDashboardOverview({
+      fromDate,
+      toDate,
+      year
+    });
+
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, overview);
   } catch (error) {
     sendResponse(
@@ -21,8 +28,12 @@ const getDashboardOverview = async (req, res) => {
 
 const getOrderStatistics = async (req, res) => {
   try {
-    const period = req.query.period || '7days';
-    const statistics = await analyticsService.getOrderStatistics(period);
+    const { fromDate, toDate, year } = req.query;
+    const statistics = await analyticsService.getOrderStatistics({
+      fromDate,
+      toDate,
+      year
+    });
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, statistics);
   } catch (error) {
     sendResponse(
@@ -38,7 +49,12 @@ const getOrderStatistics = async (req, res) => {
 
 const getOrderStatusStatistics = async (req, res) => {
   try {
-    const statistics = await analyticsService.getOrderStatusStatistics();
+    const { fromDate, toDate, year } = req.query;
+    const statistics = await analyticsService.getOrderStatusStatistics({
+      fromDate,
+      toDate,
+      year
+    });
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, statistics);
   } catch (error) {
     sendResponse(
