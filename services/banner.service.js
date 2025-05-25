@@ -8,7 +8,6 @@ const getAllBanners = async () => {
 const getOneBannerActive = async () => {
     return await Banner.findOne({
         where: { status: true },
-        order: [['order', 'ASC']],
     });
 };
 

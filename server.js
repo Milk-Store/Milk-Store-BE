@@ -6,10 +6,65 @@ const { STATUS } = require('./constants/httpStatusCodes');
 const { notFoundHandler, errorHandler } = require('./middleware/error');
 const { createAdminUser } = require('./seeders/admin-user');
 const db = require('./models');
+const http = require("http");
+const { Server } = require("socket.io");
 
 const app = express();
+const server = http.createServer(app);
+const io = new Server(server, {
+  cors: {
+    origin: function (origin, callback) {
+      // Cho phép không có origin (Postman, app build)
+      if (!origin) {
+        return callback(null, true);
+      }
+
+      // Cho phép nếu origin nằm trong danh sách allowed
+      if (allowedOrigins.includes(origin)) {
+        return callback(null, true);
+      }
+
+      // Cho phép các origin từ mạng LAN (VD: 192.168.x.x)
+      const isLAN = /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin);
+      if (isLAN) {
+        return callback(null, true);
+      }
+
+      console.warn('Blocked by Socket.IO CORS:', origin);
+      return callback(new Error('Not allowed by CORS'));
+    },
+    credentials: true,
+    methods: ["GET", "POST"]
+  }
+});
+
+// Lưu trữ các admin socket connections
+const adminSockets = new Map();
+
+// Socket.IO connection handler
+io.on('connection', (socket) => {
+  console.log('A user connected:', socket.id);
+
+  // Xử lý khi admin connect và authenticate
+  socket.on('admin_connect', (token) => {
+    // TODO: Verify token và kiểm tra role admin
+    // Tạm thời cứ lưu socket connection
+    adminSockets.set(socket.id, socket);
+    console.log('Admin connected:', socket.id);
+  });
+
+  socket.on('disconnect', () => {
+    adminSockets.delete(socket.id);
+    console.log('User disconnected:', socket.id);
+  });
+});
+
+// Export io instance để sử dụng ở các module khác
+app.set('io', io);
+app.set('adminSockets', adminSockets);
+
 const PORT = process.env.PORT || 8000;
-const HOST = process.env.HOST || '0.0.0.0'; // Lắng nghe tất cả các interfaces
+const HOST = process.env.HOST || '0.0.0.0';
 
 // Cấu hình CORS cho phép chia sẻ cookie giữa client và server
 const allowedOrigins = [
@@ -86,7 +141,7 @@ const startServer = async () => {
     await createAdminUser();
     
     // Khởi động server
-    app.listen(PORT, HOST, () => {
+    server.listen(PORT, HOST, () => {
       console.log(`Server is running at http://${HOST}:${PORT}`);
       console.log(`Server is also available on your local network at:`);
       console.log(`To access it from other devices, use one of these addresses:`);

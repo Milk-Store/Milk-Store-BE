@@ -1,6 +1,7 @@
 const { User, RefreshToken } = require('../models');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
+const { Expo } = require('expo-server-sdk');
 const { AUTH } = require('../constants/auth');
 const { MESSAGE } = require('../constants/messages');
 
@@ -38,7 +39,7 @@ const generateRefreshToken = async (userId) => {
 };
 
 // Đăng nhập
-const login = async (email, password) => {
+const login = async (email, password, pushToken = null) => {
   const user = await User.findOne({ where: { email } });
   if (!user) {
     throw new Error(MESSAGE.ERROR.USER_NOT_FOUND);
@@ -47,6 +48,33 @@ const login = async (email, password) => {
   const isPasswordMatch = await bcrypt.compare(password, user.password);
   if (!isPasswordMatch) {
     throw new Error(MESSAGE.ERROR.PASSWORD_WRONG);
+  }
+
+  // Nếu là admin và có push token hợp lệ, cập nhật token
+  if (user.role === 'ROLE_ADMIN' && pushToken) {
+    // Validate Expo push token
+    if (!Expo.isExpoPushToken(pushToken)) {
+      console.error(`Invalid Expo push token provided: ${pushToken}`);
+    } else {
+      try {
+        // Xóa token này khỏi các tài khoản khác nếu có
+        await User.update(
+          { push_token: null },
+          {
+            where: {
+              push_token: pushToken,
+              id: { [Op.ne]: user.id }
+            }
+          }
+        );
+
+        // Cập nhật token cho user hiện tại
+        await user.update({ push_token: pushToken });
+      } catch (error) {
+        console.error('Error updating push token:', error);
+        // Không throw error vì đây không phải lỗi nghiêm trọng
+      }
+    }
   }
 
   const accessToken = generateAccessToken(user);
@@ -65,13 +93,27 @@ const login = async (email, password) => {
 };
 
 // Đăng xuất
-const logout = async (refreshToken) => {
-  const token = await RefreshToken.findOne({ where: { token: refreshToken } });
-  if (!token) {
-    throw new Error(MESSAGE.ERROR.REFRESH_TOKEN_INVALID);
+const logout = async (userId) => {
+  try {
+    // Xóa push token khi đăng xuất
+    await User.update(
+      { push_token: null },
+      { 
+        where: { id: userId }
+      }
+    );
+  } catch (error) {
+    console.error('Error removing push token during logout:', error);
+    // Không throw error vì đây không phải lỗi nghiêm trọng
   }
+};
 
-  await token.update({ is_used: true });
+// Thêm hàm mới để cập nhật push token
+const updatePushToken = async (userId, pushToken) => {
+  await User.update(
+    { push_token: pushToken },
+    { where: { id: userId } }
+  );
 };
 
 // Làm mới access token bằng refresh token
@@ -124,5 +166,6 @@ const refreshAccessToken = async (refreshToken) => {
 module.exports = {
   login,
   logout,
-  refreshAccessToken
+  refreshAccessToken,
+  updatePushToken
 }; 

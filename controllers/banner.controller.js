@@ -10,7 +10,8 @@ const {
 const getAll = async (req, res) => {
   try {
     const banners = await bannerService.getAllBanners();
-
+    console.log("banners", banners);
+    
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, banners);
   } catch (error) {
     sendResponse(
@@ -47,6 +48,7 @@ const getAllByAdmin = async (req, res) => {
 const getOneBanner = async (req, res) => {
     try {
         const banner = await bannerService.getOneBannerActive();
+        
         sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, banner);
     } catch (error) {
         sendResponse(
