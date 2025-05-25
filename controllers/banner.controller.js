@@ -1,4 +1,4 @@
-const categoryService = require("../services/category.service");
+const bannerService = require("../services/banner.service");
 const sendResponse = require("../utils/responseFormatter");
 const { MESSAGE } = require("../constants/messages");
 const { STATUS } = require("../constants/httpStatusCodes");
@@ -9,9 +9,9 @@ const {
 
 const getAll = async (req, res) => {
   try {
-    const categories = await categoryService.getAllCategories();
+    const banners = await bannerService.getAllBanners();
 
-    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, categories);
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, banners);
   } catch (error) {
     sendResponse(
       res,
@@ -30,7 +30,7 @@ const getAllByAdmin = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || '';
 
-    const result = await categoryService.getAllCategoriesByAdmin(page, limit, search);
+    const result = await bannerService.getAllBannersByAdmin(page, limit, search);
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, result);
   } catch (error) {
     sendResponse(
@@ -44,20 +44,36 @@ const getAllByAdmin = async (req, res) => {
   }
 };
 
+const getOneBanner = async (req, res) => {
+    try {
+        const banner = await bannerService.getOneBannerActive();
+        sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, banner);
+    } catch (error) {
+        sendResponse(
+            res,
+            STATUS.SERVER_ERROR,
+            MESSAGE.ERROR.INTERNAL,
+            null,
+            false,
+            true
+        );
+    }
+};
+
 const create = async (req, res) => {
   try {
-    const categoryData = { ...req.body };
+    const bannerData = { ...req.body };
     if (req.file) {
-      const fileName = `category_${Date.now()}`;
+      const fileName = `banner_${Date.now()}`;
       const imageUrl = await uploadToCloudinary(
         req.file,
-        "categories",
+        "banners",
         fileName
       );
-      categoryData.image = imageUrl;
+      bannerData.image = imageUrl;
     }
-    const category = await categoryService.createCategory(categoryData);
-    sendResponse(res, STATUS.CREATED, MESSAGE.SUCCESS.CREATED, category);
+    const banner = await bannerService.createBanner(bannerData);
+    sendResponse(res, STATUS.CREATED, MESSAGE.SUCCESS.CREATED, banner);
   } catch (error) {
     sendResponse(
       res,
@@ -72,32 +88,32 @@ const create = async (req, res) => {
 
 const update = async (req, res) => {
   try {
-    const categoryId = req.params.id;
-    const categoryData = { ...req.body };
+    const bannerId = req.params.id;
+    const bannerData = { ...req.body };
 
     if (req.file) {
       // Lấy thông tin sản phẩm cũ để xóa ảnh cũ nếu có
-      const existingCategory = await categoryService.getCategoryById(
-        categoryId
+      const existingBanner = await bannerService.getBannerById(
+        bannerId
       );
-      if (existingCategory && existingCategory.image) {
-        await deleteFromCloudinary(existingCategory.image);
+      if (existingBanner && existingBanner.image) {
+        await deleteFromCloudinary(existingBanner.image);
       }
 
       // Upload ảnh mới
-      const fileName = `category_${categoryId}_${Date.now()}`;
+      const fileName = `banner_${bannerId}_${Date.now()}`;
       const imageUrl = await uploadToCloudinary(
         req.file,
-        "categories",
+        "banners",
         fileName
       );
-      categoryData.image = imageUrl;
+      bannerData.image = imageUrl;
     }
-    const updatedCategory = await categoryService.updateCategory(
-      categoryId,
-      categoryData
+    const updatedBanner = await bannerService.updateBanner(
+      bannerId,
+      bannerData
     );
-    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.UPDATED, updatedCategory);
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.UPDATED, updatedBanner);
   } catch (error) {
     sendResponse(
       res,
@@ -112,7 +128,7 @@ const update = async (req, res) => {
 
 const remove = async (req, res) => {
   try {
-    await categoryService.deleteCategory(req.params.id);
+    await bannerService.deleteBanner(req.params.id);
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.DELETED);
   } catch (error) {
     sendResponse(
@@ -126,12 +142,13 @@ const remove = async (req, res) => {
   }
 };
 
-const ApiCategoryController = {
+const ApiBannerController = {
   getAll,
   create,
   update,
   remove,
-  getAllByAdmin
+  getAllByAdmin,
+  getOneBanner
 };
 
-module.exports = ApiCategoryController;
+module.exports = ApiBannerController;

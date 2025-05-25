@@ -7,6 +7,12 @@ const getAllSliders = async () => {
   });
 };
 
+const getAllSlidersByAdmin = async () => {
+  return await Slider.findAll({
+    order: [['order', 'ASC']],
+  });
+};
+
 const getSliderById = async (id) => {
   return await Slider.findByPk(id);
 };
@@ -35,4 +41,5 @@ module.exports = {
   updateSlider,
   deleteSlider,
   getSliderById,
+  getAllSlidersByAdmin
 };

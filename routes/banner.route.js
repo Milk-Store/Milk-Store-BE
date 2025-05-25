@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
 const { body } = require('express-validator');
-const ApiCategoryController = require("../controllers/category.controller");
+const ApiBannerController = require("../controllers/banner.controller");
 const auth = require("../middleware/auth");
 const { isAdmin } = require("../middleware/role");
 const { validate } = require('../middleware/validator');
@@ -10,9 +10,11 @@ const { BASE_ENDPOINT } = require('../constants/endpoints')
 const upload = require('../utils/multer');
 
 // Route public
-router.get(BASE_ENDPOINT.BASE, ApiCategoryController.getAll);
+router.get(BASE_ENDPOINT.BASE, ApiBannerController.getAll);
 
-router.get(BASE_ENDPOINT.ADMIN_LIST, auth, isAdmin, ApiCategoryController.getAllByAdmin);
+router.get(BASE_ENDPOINT.ADMIN_LIST, auth, isAdmin, ApiBannerController.getAllByAdmin);
+
+router.get(BASE_ENDPOINT.GET_ONE, ApiBannerController.getOneBanner);
 
 // Route với phân quyền admin
 router.post(
@@ -20,11 +22,7 @@ router.post(
   auth, 
   isAdmin, 
   upload.single('image'),
-  [
-    body('name').notEmpty().withMessage(MESSAGE.VALIDATION.REQUIRED('Tên danh mục'))
-  ],
-  validate,
-  ApiCategoryController.create
+  ApiBannerController.create
 );
 
 router.put(
@@ -32,13 +30,9 @@ router.put(
   auth, 
   isAdmin, 
   upload.single('image'),
-  [
-    body('name').notEmpty().withMessage(MESSAGE.VALIDATION.REQUIRED('Tên danh mục'))
-  ],
-  validate,
-  ApiCategoryController.update
+  ApiBannerController.update
 );
 
-router.delete(BASE_ENDPOINT.BY_ID, auth, isAdmin, ApiCategoryController.remove);
+router.delete(BASE_ENDPOINT.BY_ID, auth, isAdmin, ApiBannerController.remove);
 
 module.exports = router;

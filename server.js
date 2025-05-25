@@ -25,13 +25,25 @@ const allowedOrigins = [
 
 const corsOptions = {
   origin: function (origin, callback) {
-    // Cho phép cả không có origin (app mobile, Postman)
-    if (!origin || allowedOrigins.includes(origin)) {
-      callback(null, true);
-    } else {
-      console.warn('Blocked by CORS: ', origin);
-      callback(new Error('Not allowed by CORS: ' + origin));
+    // Cho phép không có origin (Postman, app build)
+    if (!origin) {
+      return callback(null, true);
     }
+
+    // Cho phép nếu origin nằm trong danh sách allowed
+    if (allowedOrigins.includes(origin)) {
+      return callback(null, true);
+    }
+
+    // Cho phép các origin từ mạng LAN (VD: 192.168.x.x)
+    const isLAN = /^http:\/\/192\.168\.\d+\.\d+(:\d+)?$/.test(origin);
+    if (isLAN) {
+      return callback(null, true);
+    }
+
+    // Chặn còn lại
+    console.warn('Blocked by CORS:', origin);
+    return callback(new Error('Not allowed by CORS: ' + origin));
   },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

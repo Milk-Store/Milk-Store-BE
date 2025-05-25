@@ -12,7 +12,9 @@ module.exports = {
   VIDEO: "/videos",
   REFRESH: "/refresh",
   ADMIN_LIST: "/admin/list",
+  GET_ONE: "/one",
   USER_ONLY: "/user",
   EXPIRED: "expired",
   REGISTER: "/register",
+  BANNER: "/banners"
 };

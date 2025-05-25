@@ -7,9 +7,27 @@ const {
   deleteFromCloudinary,
 } = require("../utils/cloudinary");
 
+
 const getAll = async (req, res) => {
   try {
     const sliders = await sliderService.getAllSliders();
+
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, sliders);
+  } catch (error) {
+    sendResponse(
+      res,
+      STATUS.SERVER_ERROR,
+      MESSAGE.ERROR.INTERNAL,
+      null,
+      false,
+      true
+    );
+  }
+};
+
+const getAllByAdmin = async (req, res) => {
+  try {
+    const sliders = await sliderService.getAllSlidersByAdmin();
 
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, sliders);
   } catch (error) {
@@ -101,6 +119,7 @@ const ApiSliderController = {
   create,
   update,
   remove,
+  getAllByAdmin
 };
 
 module.exports = ApiSliderController;
