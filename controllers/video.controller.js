@@ -20,6 +20,23 @@ const getAll = async (req, res) => {
   }
 };
 
+const getAllByAdmin = async (req, res) => {
+  try {
+    const videos = await videoService.getAllVideosByAdmin();
+
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, videos);
+  } catch (error) {
+    sendResponse(
+      res,
+      STATUS.SERVER_ERROR,
+      MESSAGE.ERROR.INTERNAL,
+      null,
+      false,
+      true
+    );
+  }
+};
+
 const create = async (req, res) => {
   try {
     const videoData = { ...req.body };
@@ -80,6 +97,7 @@ const ApiVideoController = {
   create,
   update,
   remove,
+  getAllByAdmin,
 };
 
 module.exports = ApiVideoController;

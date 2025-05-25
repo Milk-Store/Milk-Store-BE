@@ -6,6 +6,10 @@ const getAllVideos = async () => {
   });
 };
 
+const getAllVideosByAdmin = async () => {
+  return await Video.findAll();
+};
+
 const getVideoById = async (id) => {
   return await Video.findByPk(id);
 };
@@ -34,4 +38,5 @@ module.exports = {
   updateVideo,
   deleteVideo,
   getVideoById,
+  getAllVideosByAdmin
 };

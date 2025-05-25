@@ -6,6 +6,7 @@ const { isAdmin } = require("../middleware/role");
 const { BASE_ENDPOINT } = require('../constants/endpoints');
 // Route public
 router.get(BASE_ENDPOINT.BASE, ApiVideoController.getAll);
+router.get(BASE_ENDPOINT.ADMIN_LIST, auth, isAdmin, ApiVideoController.getAllByAdmin);
 
 // Route với phân quyền admin
 router.post(

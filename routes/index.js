@@ -8,6 +8,9 @@ const orderRoute = require("./order.route");
 const productRoute = require("./product.route");
 const authRoute = require("./auth.route");
 const analyticsRoute = require("./analytics.route");
+const sliderRoute = require("./slider.route");
+const videoRoute = require("./video.route");
+const bannerRoute = require("./banner.route");
 const { BASE_ENDPOINT } = require("../constants/endpoints");
 
 router.use(BASE_ENDPOINT.CATEGORY, categoryRoute);
@@ -17,5 +20,8 @@ router.use(BASE_ENDPOINT.ORDER, orderRoute);
 router.use(BASE_ENDPOINT.PRODUCT, productRoute);
 router.use(BASE_ENDPOINT.AUTH, authRoute);
 router.use(BASE_ENDPOINT.ANALYTICS, analyticsRoute);
+router.use(BASE_ENDPOINT.SLIDER, sliderRoute);
+router.use(BASE_ENDPOINT.VIDEO, videoRoute);
+router.use(BASE_ENDPOINT.BANNER, bannerRoute);
 
 module.exports = router;
