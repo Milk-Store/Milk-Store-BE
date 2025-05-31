@@ -16,5 +16,6 @@ module.exports = {
   USER_ONLY: "/user",
   EXPIRED: "expired",
   REGISTER: "/register",
-  BANNER: "/banners"
+  BANNER: "/banners",
+  SELLING: "/selling",
 };

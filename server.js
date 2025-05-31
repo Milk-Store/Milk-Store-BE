@@ -8,6 +8,7 @@ const { createAdminUser } = require('./seeders/admin-user');
 const db = require('./models');
 const http = require("http");
 const { Server } = require("socket.io");
+const jwt = require('jsonwebtoken');
 
 const app = express();
 const server = http.createServer(app);
@@ -46,11 +47,29 @@ io.on('connection', (socket) => {
   console.log('A user connected:', socket.id);
 
   // Xử lý khi admin connect và authenticate
-  socket.on('admin_connect', (token) => {
-    // TODO: Verify token và kiểm tra role admin
-    // Tạm thời cứ lưu socket connection
-    adminSockets.set(socket.id, socket);
-    console.log('Admin connected:', socket.id);
+  socket.on('admin_connect', async (token) => {
+    try {
+      // Verify token
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      
+      // Kiểm tra role admin
+      if (decoded.role !== 'ROLE_ADMIN') {
+        socket.disconnect();
+        return;
+      }
+
+      // Lưu socket connection với thông tin admin
+      adminSockets.set(socket.id, {
+        socket,
+        userId: decoded.id,
+        role: decoded.role
+      });
+      
+      console.log('Admin connected:', socket.id);
+    } catch (error) {
+      console.error('Invalid admin token:', error);
+      socket.disconnect();
+    }
   });
 
   socket.on('disconnect', () => {

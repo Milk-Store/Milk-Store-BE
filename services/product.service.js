@@ -1,4 +1,4 @@
-const { Op } = require('sequelize');
+const { Op, where } = require('sequelize');
 const { Product } = require('../models');
 
 const getAllProducts = async () => {
@@ -36,6 +36,15 @@ const getAllProductsByAdmin = async (page = 1, limit = 10, search = '', category
   };
 };
 
+const getTopSellingProducts = async () => {
+  // Assuming you have an OrderItem model to track sales
+  return await Product.findAll({
+    where: {
+      status: true,
+    },
+  });
+};
+
 
 const getProductById = async (id) => {
   return await Product.findByPk(id);
@@ -65,5 +74,6 @@ module.exports = {
   createProduct,
   updateProduct,
   deleteProduct,
-  getAllProductsByAdmin
+  getAllProductsByAdmin,
+  getTopSellingProducts
 }; 

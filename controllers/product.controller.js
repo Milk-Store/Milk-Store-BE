@@ -41,6 +41,22 @@ const getAllByAdmin = async (req, res) => {
   }
 };
 
+const getTopSelling = async (req, res) => {
+  try {    
+    const topSellingProducts = await productService.getTopSellingProducts();
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, topSellingProducts);
+  } catch (error) {
+    sendResponse(
+      res,
+      STATUS.SERVER_ERROR,
+      MESSAGE.ERROR.INTERNAL,
+      null,
+      false,
+      true
+    );
+  }
+};
+
 const create = async (req, res) => {
   try {
     const productData = { ...req.body };
@@ -150,6 +166,7 @@ const ApiProductController = {
   update,
   remove,
   show,
+  getTopSelling
 };
 
 module.exports = ApiProductController; 

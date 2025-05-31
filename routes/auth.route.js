@@ -5,6 +5,8 @@ const ApiAuthController = require("../controllers/auth.controller");
 const { validate } = require('../middleware/validator');
 const { MESSAGE } = require('../constants/messages')
 const { AUTH } = require('../constants/endpoints')
+const auth = require('../middleware/auth'); // Import middleware auth
+
 // Đăng nhập - thêm validation
 router.post(
   AUTH.LOGIN, 
@@ -17,7 +19,7 @@ router.post(
 );
 
 // Đăng xuất
-router.post(AUTH.LOGOUT, ApiAuthController.logout);
+router.post(AUTH.LOGOUT, auth, ApiAuthController.logout);
 
 // Làm mới token
 router.post(

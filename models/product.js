@@ -29,6 +29,11 @@ module.exports = (sequelize, DataTypes) => {
     image: DataTypes.STRING,
     price: DataTypes.DECIMAL,
     category_id: DataTypes.INTEGER,
+    status: {
+      type: DataTypes.BOOLEAN,
+      allowNull: false,
+      defaultValue: false
+    },
     deletedAt: DataTypes.DATE
   }, {
     sequelize,

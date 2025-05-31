@@ -26,6 +26,7 @@ const setTokenCookies = (res, accessToken, refreshToken) => {
 
 // Xóa cookie
 const clearTokenCookies = (res) => {
+
   res.clearCookie(AUTH.COOKIES.ACCESS_TOKEN);
   res.clearCookie(AUTH.COOKIES.REFRESH_TOKEN, { path: AUTH.COOKIES.REFRESH_TOKEN_PATH });
 };
@@ -73,7 +74,7 @@ const login = async (req, res) => {
   }
 };
 
-const logout = async (req, res) => {
+const logout = async (req, res) => {  
   try {
     const userId = req.user.id;
     await authService.logout(userId);

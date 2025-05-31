@@ -39,7 +39,7 @@ const generateRefreshToken = async (userId) => {
 };
 
 // Đăng nhập
-const login = async (email, password, pushToken = null) => {
+const login = async (email, password) => {
   const user = await User.findOne({ where: { email } });
   if (!user) {
     throw new Error(MESSAGE.ERROR.USER_NOT_FOUND);
@@ -48,33 +48,6 @@ const login = async (email, password, pushToken = null) => {
   const isPasswordMatch = await bcrypt.compare(password, user.password);
   if (!isPasswordMatch) {
     throw new Error(MESSAGE.ERROR.PASSWORD_WRONG);
-  }
-
-  // Nếu là admin và có push token hợp lệ, cập nhật token
-  if (user.role === 'ROLE_ADMIN' && pushToken) {
-    // Validate Expo push token
-    if (!Expo.isExpoPushToken(pushToken)) {
-      console.error(`Invalid Expo push token provided: ${pushToken}`);
-    } else {
-      try {
-        // Xóa token này khỏi các tài khoản khác nếu có
-        await User.update(
-          { push_token: null },
-          {
-            where: {
-              push_token: pushToken,
-              id: { [Op.ne]: user.id }
-            }
-          }
-        );
-
-        // Cập nhật token cho user hiện tại
-        await user.update({ push_token: pushToken });
-      } catch (error) {
-        console.error('Error updating push token:', error);
-        // Không throw error vì đây không phải lỗi nghiêm trọng
-      }
-    }
   }
 
   const accessToken = generateAccessToken(user);
