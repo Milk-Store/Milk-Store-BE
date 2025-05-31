@@ -1,6 +1,7 @@
 const { Order, OrderItem, Product } = require('../models');
 const { PAGINATION } = require('../constants/pagination');
 const { where, Op } = require('sequelize');
+const NotificationService = require('./notification.service');
 
 const getAllOrders = async () => {
   try {
@@ -82,48 +83,98 @@ const getAllOrdersByAdmin = async ({
   }
 };
 
+// Thêm hàm mới để xử lý socket notification
+const sendOrderNotificationViaSocket = (order, io, adminSockets) => {
+  if (!io || !adminSockets) {
+    console.log('Socket.IO not initialized or no admin sockets available');
+    return;
+  }
 
-const createOrder = async ({phone, name, items, total}, io, adminSockets) => {
-  const order = await Order.create({phone, name, total});
-  
-  const orderItemsWithOrderId = items.map(item => ({ ...item, order_id: order.id }));
-  
-  const response = await OrderItem.bulkCreate(orderItemsWithOrderId);
-  
-  // Trả về đơn hàng với các orderItems
-  const createdOrder = await Order.findByPk(order.id, {
-    include: [{ 
-      model: OrderItem, 
-      as: 'orderItems',
-      include: [
-        {
-          model: Product,
-          as: 'product'
-        }
-      ]
-    }]
-  });
-
-  // Gửi thông báo cho tất cả admin đang online qua Socket.IO
-  if (io && adminSockets) {
+  try {
     const notification = {
       type: 'NEW_ORDER',
       message: `Có đơn hàng mới từ ${order.phone} với tổng giá trị ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total)}`,
       order: {
-        id: createdOrder.id,
-        phone: createdOrder.phone,
-        total: createdOrder.total,
-        createdAt: createdOrder.createdAt
+        id: order.id,
+        phone: order.phone,
+        total: order.total,
+        createdAt: order.createdAt,
+        status: order.status
       }
     };
 
-    // Gửi thông báo cho tất cả admin sockets
+    // Log số lượng admin đang online
+    console.log(`Sending socket notification to ${adminSockets.size} online admins`);
+
+    // Gửi thông báo cho từng admin socket
+    let sentCount = 0;
     adminSockets.forEach(({socket}) => {
-      socket.emit('notification', notification);
+      try {
+        socket.emit('notification', notification);
+        sentCount++;
+      } catch (socketError) {
+        console.error(`Failed to send notification to socket ${socket.id}:`, socketError);
+      }
     });
+
+    console.log(`Successfully sent notifications to ${sentCount} admins`);
+    return true;
+  } catch (error) {
+    console.error('Error sending socket notification:', error);
+    return false;
   }
+};
+
+const createOrder = async ({phone, name, items, total}, io, adminSockets) => {
+  console.log('Creating new order...');
   
-  return createdOrder;
+  try {
+    // 1. Tạo order
+    const order = await Order.create({phone, name, total});
+    console.log('Order created with ID:', order.id);
+    
+    // 2. Tạo order items
+    const orderItemsWithOrderId = items.map(item => ({ ...item, order_id: order.id }));
+    await OrderItem.bulkCreate(orderItemsWithOrderId);
+    
+    // 3. Lấy order đầy đủ với relations
+    const createdOrder = await Order.findByPk(order.id, {
+      include: [{ 
+        model: OrderItem, 
+        as: 'orderItems',
+        include: [
+          {
+            model: Product,
+            as: 'product'
+          }
+        ]
+      }]
+    });
+
+    // 4. Gửi socket notification cho web client
+    sendOrderNotificationViaSocket(createdOrder, io, adminSockets);
+
+    // 5. Gửi push notification cho mobile client (đã có)
+    try {
+      await NotificationService.sendNotificationToAdmins(
+        'Đơn hàng mới',
+        `Có đơn hàng mới từ ${order.phone}`,
+        {
+          type: 'NEW_ORDER',
+          orderId: order.id,
+          total: order.total
+        }
+      );
+    } catch (notificationError) {
+      console.error('Error sending push notifications:', notificationError);
+      // Không throw error vì đây không phải lỗi nghiêm trọng
+    }
+    
+    return createdOrder;
+  } catch (error) {
+    console.error('Error in createOrder:', error);
+    throw error;
+  }
 };
 
 const updateOrder = async ({id, status}) => {

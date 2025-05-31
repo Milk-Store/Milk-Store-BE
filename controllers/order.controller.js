@@ -43,7 +43,7 @@ const getAllByAdmin = async (req, res) => {
   }
 };
 
-const create = async (req, res) => {
+const create = async (req, res) => {  
   try {
     const { phone, items, total, name } = req.body;
     
@@ -55,8 +55,7 @@ const create = async (req, res) => {
       {phone, name, items, total},
       io,
       adminSockets
-    );
-    
+    );    
     sendResponse(res, STATUS.CREATED, MESSAGE.SUCCESS.CREATED, order);
   } catch (error) {
     sendResponse(
