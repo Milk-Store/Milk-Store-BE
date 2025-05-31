@@ -7,6 +7,8 @@ const sendResponse = require('../utils/responseFormatter');
 const auth = (req, res, next) => {
   console.log('Auth middleware running');
   // Lấy token từ cookies hoặc từ Authorization header
+  console.log('cookies:', req.cookies);
+  
   let token = req.cookies[AUTH.COOKIES.ACCESS_TOKEN];
   console.log('Cookie token:', token ? 'exists' : 'not found');
 

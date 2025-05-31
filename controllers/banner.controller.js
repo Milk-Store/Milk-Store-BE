@@ -9,9 +9,7 @@ const {
 
 const getAll = async (req, res) => {
   try {
-    const banners = await bannerService.getAllBanners();
-    console.log("banners", banners);
-    
+    const banners = await bannerService.getAllBanners();    
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, banners);
   } catch (error) {
     sendResponse(

@@ -1,7 +1,6 @@
 const { Order, OrderItem, Product } = require('../models');
 const { PAGINATION } = require('../constants/pagination');
 const { where, Op } = require('sequelize');
-const notificationService = require('./notification.service');
 
 const getAllOrders = async () => {
   try {
@@ -31,15 +30,26 @@ const getAllOrders = async () => {
 const getAllOrdersByAdmin = async ({
   page = 1,
   limit = 10,
+  search = '',
+  sort = 'ASC', // mặc định: sớm đến trễ
   status = '',
-  sort = 'ASC' // mặc định: sớm đến trễ
 }) => {
-  const offset = (page - 1) * limit;
+  try {
+    const offset = (page - 1) * limit;
   const whereClause = {};
 
+  // Nếu có status thì thêm điều kiện lọc theo status
   if (status) {
     whereClause.status = status;
   }
+
+   if (search) {
+      whereClause.name = {
+        [Op.like]: `%${search}%`, // Thay iLike bằng like cho MySQL
+        // Thêm điều kiện collate để tìm kiếm không phân biệt chữ hoa chữ thường
+        [Op.collate]: 'utf8_general_ci',
+      };
+    }
 
   const { count, rows } = await Order.findAndCountAll({
     where: whereClause,
@@ -67,6 +77,9 @@ const getAllOrdersByAdmin = async ({
     itemsPerPage: limit,
     orders: rows
   };
+  } catch (error) {
+    console.error(error)
+  }
 };
 
 
@@ -95,7 +108,7 @@ const createOrder = async ({phone, name, items, total}, io, adminSockets) => {
   if (io && adminSockets) {
     const notification = {
       type: 'NEW_ORDER',
-      message: 'Có đơn hàng mới!',
+      message: `Có đơn hàng mới từ ${order.phone} với tổng giá trị ${new Intl.NumberFormat('vi-VN', { style: 'currency', currency: 'VND' }).format(order.total)}`,
       order: {
         id: createdOrder.id,
         phone: createdOrder.phone,
@@ -105,13 +118,10 @@ const createOrder = async ({phone, name, items, total}, io, adminSockets) => {
     };
 
     // Gửi thông báo cho tất cả admin sockets
-    adminSockets.forEach(socket => {
+    adminSockets.forEach(({socket}) => {
       socket.emit('notification', notification);
     });
   }
-
-  // Gửi push notification cho các admin không online
-  await notificationService.sendNewOrderNotification(createdOrder);
   
   return createdOrder;
 };
