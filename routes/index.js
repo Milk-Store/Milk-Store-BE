@@ -11,6 +11,7 @@ const analyticsRoute = require("./analytics.route");
 const sliderRoute = require("./slider.route");
 const videoRoute = require("./video.route");
 const bannerRoute = require("./banner.route");
+const notificationRoute = require("./notification.route");
 const { BASE_ENDPOINT } = require("../constants/endpoints");
 
 router.use(BASE_ENDPOINT.CATEGORY, categoryRoute);
@@ -23,5 +24,6 @@ router.use(BASE_ENDPOINT.ANALYTICS, analyticsRoute);
 router.use(BASE_ENDPOINT.SLIDER, sliderRoute);
 router.use(BASE_ENDPOINT.VIDEO, videoRoute);
 router.use(BASE_ENDPOINT.BANNER, bannerRoute);
+router.use(BASE_ENDPOINT.NOTIFICATION, notificationRoute);
 
 module.exports = router;

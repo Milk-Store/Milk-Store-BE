@@ -18,4 +18,5 @@ module.exports = {
   REGISTER: "/register",
   BANNER: "/banners",
   SELLING: "/selling",
+  NOTIFICATION: "/notifications",
 };

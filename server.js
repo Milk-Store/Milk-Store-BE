@@ -9,7 +9,7 @@ const db = require('./models');
 const http = require("http");
 const { Server } = require("socket.io");
 const jwt = require('jsonwebtoken');
-
+const cookie = require('cookie');
 const app = express();
 const server = http.createServer(app);
 const io = new Server(server, {
@@ -44,41 +44,103 @@ const adminSockets = new Map();
 
 // Socket.IO connection handler
 io.on('connection', (socket) => {
-  console.log('A user connected:', socket.id);
-
+  console.log('New socket connection:', socket.id);
+  
   // Xử lý khi admin connect và authenticate
-  socket.on('admin_connect', async (token) => {
+  socket.on('admin_connect', async () => {
     try {
+      // Lấy token từ cookies
+      const cookies = cookie.parse(socket.handshake.headers.cookie || '');
+      console.log('Cookies received:', cookies);
+      
+      const token = cookies.access_token; // Thay 'token' bằng tên cookie thực tế của bạn
+      console.log('Token received:', token);
+      if (!token) {
+        throw new Error('No token provided');
+      }
+
       // Verify token
       const decoded = jwt.verify(token, process.env.JWT_SECRET);
       
       // Kiểm tra role admin
       if (decoded.role !== 'ROLE_ADMIN') {
+        console.log('Non-admin tried to connect:', socket.id);
+        socket.emit('auth_error', { message: 'Unauthorized: Admin access required' });
         socket.disconnect();
         return;
+      }
+
+      // Xóa socket cũ nếu admin đã có kết nối trước đó
+      for (const [socketId, admin] of adminSockets.entries()) {
+        if (admin.userId === decoded.id) {
+          console.log(`Removing old socket connection for admin ${decoded.id}`);
+          admin.socket.disconnect();
+          adminSockets.delete(socketId);
+        }
       }
 
       // Lưu socket connection với thông tin admin
       adminSockets.set(socket.id, {
         socket,
         userId: decoded.id,
-        role: decoded.role
+        role: decoded.role,
+        connectedAt: new Date()
       });
       
-      console.log('Admin connected:', socket.id);
+      console.log(`Admin ${decoded.id} connected successfully via socket ${socket.id}`);
+      console.log(`Total admin connections: ${adminSockets.size}`);
+
+      // Gửi xác nhận kết nối thành công
+      socket.emit('admin_connected', {
+        message: 'Connected successfully as admin',
+        socketId: socket.id
+      });
+
+      // Thiết lập ping/pong để kiểm tra kết nối
+      socket.on('ping', () => {
+        socket.emit('pong');
+      });
+
     } catch (error) {
-      console.error('Invalid admin token:', error);
+      console.error('Socket authentication error:', error);
+      socket.emit('auth_error', { message: 'Authentication failed' });
       socket.disconnect();
     }
   });
 
+  // Xử lý disconnect
   socket.on('disconnect', () => {
-    adminSockets.delete(socket.id);
-    console.log('User disconnected:', socket.id);
+    if (adminSockets.has(socket.id)) {
+      const admin = adminSockets.get(socket.id);
+      console.log(`Admin ${admin.userId} disconnected from socket ${socket.id}`);
+      adminSockets.delete(socket.id);
+      console.log(`Remaining admin connections: ${adminSockets.size}`);
+    }
+  });
+
+  // Xử lý lỗi socket
+  socket.on('error', (error) => {
+    console.error('Socket error:', error);
+    if (adminSockets.has(socket.id)) {
+      adminSockets.delete(socket.id);
+    }
   });
 });
 
-// Export io instance để sử dụng ở các module khác
+// Định kỳ dọn dẹp các kết nối không hợp lệ
+setInterval(() => {
+  const now = new Date();
+  for (const [socketId, admin] of adminSockets.entries()) {
+    // Kiểm tra kết nối cũ hơn 1 giờ
+    if (now - admin.connectedAt > 60 * 60 * 1000) {
+      console.log(`Cleaning up old socket connection: ${socketId}`);
+      admin.socket.disconnect();
+      adminSockets.delete(socketId);
+    }
+  }
+}, 30 * 60 * 1000); // Chạy mỗi 30 phút
+
+// Export io instance và adminSockets
 app.set('io', io);
 app.set('adminSockets', adminSockets);
 
