@@ -86,9 +86,6 @@ const update = async (req, res) => {
   try {
     const productId = req.params.id;
     const productData = { ...req.body };
-    console.log('update product', productData);
-    console.log('req.file', req.file);
-    console.log('productId', productId);
     
     // Nếu có file ảnh mới
     if (req.file) {

@@ -34,7 +34,7 @@ const getAllOrdersByAdmin = async ({
   search = '',
   sort = 'DESC',
   status = '',
-}) => {
+}) => {  
   try {
     const offset = (page - 1) * limit;
     const whereClause = {};
@@ -47,7 +47,6 @@ const getAllOrdersByAdmin = async ({
     if (search) {
       whereClause.name = {
         [Op.like]: `%${search}%`,
-        [Op.collate]: 'utf8_general_ci',
       };
     }
 
@@ -55,8 +54,6 @@ const getAllOrdersByAdmin = async ({
     const totalCount = await Order.count({
       where: whereClause
     });
-
-    console.log('totalCount:', totalCount);
 
     // Tính toán số trang thực tế
     const totalPages = Math.ceil(totalCount / limit);
@@ -146,15 +143,10 @@ const sendOrderNotificationViaSocket = (order, io, adminSockets) => {
   }
 };
 
-const createOrder = async ({phone, name, items, total}, io, adminSockets) => {
-  console.log('Creating new order...');
-  console.log('items:', items);
-  
+const createOrder = async ({phone, name, items, total}, io, adminSockets) => {  
   try {
     // 1. Tạo order
-    const order = await Order.create({phone, name, total});
-    console.log('Order created with ID:', order.id);
-    
+    const order = await Order.create({phone, name, total});    
     // 2. Tạo order items
     const orderItemsWithOrderId = items.map(item => ({ ...item, order_id: order.id }));
     await OrderItem.bulkCreate(orderItemsWithOrderId);
