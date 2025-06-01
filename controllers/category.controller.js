@@ -70,17 +70,10 @@ const create = async (req, res) => {
   }
 };
 
-const update = async (req, res) => {
-  console.log('update category', req.body);
-  
+const update = async (req, res) => {  
   try {
     const categoryId = req.params.id;
     const categoryData = { ...req.body };
-    console.log('categoryData', categoryData);
-    console.log('req.file', req.file);
-    console.log('categoryId', categoryId);
-    
-    
     
     if (req.file) {
       // Lấy thông tin sản phẩm cũ để xóa ảnh cũ nếu có
