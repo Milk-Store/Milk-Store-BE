@@ -12,6 +12,7 @@ const sliderRoute = require("./slider.route");
 const videoRoute = require("./video.route");
 const bannerRoute = require("./banner.route");
 const notificationRoute = require("./notification.route");
+const postRoute = require("./post.route");
 const { BASE_ENDPOINT } = require("../constants/endpoints");
 
 router.use(BASE_ENDPOINT.CATEGORY, categoryRoute);
@@ -25,5 +26,6 @@ router.use(BASE_ENDPOINT.SLIDER, sliderRoute);
 router.use(BASE_ENDPOINT.VIDEO, videoRoute);
 router.use(BASE_ENDPOINT.BANNER, bannerRoute);
 router.use(BASE_ENDPOINT.NOTIFICATION, notificationRoute);
+router.use(BASE_ENDPOINT.POST, postRoute);
 
 module.exports = router;

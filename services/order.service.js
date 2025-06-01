@@ -32,54 +32,75 @@ const getAllOrdersByAdmin = async ({
   page = 1,
   limit = 10,
   search = '',
-  sort = 'ASC', // mặc định: sớm đến trễ
+  sort = 'DESC',
   status = '',
 }) => {
   try {
     const offset = (page - 1) * limit;
-  const whereClause = {};
+    const whereClause = {};
 
-  // Nếu có status thì thêm điều kiện lọc theo status
-  if (status) {
-    whereClause.status = status;
-  }
+    // Nếu có status thì thêm điều kiện lọc theo status
+    if (status) {
+      whereClause.status = status;
+    }
 
-   if (search) {
+    if (search) {
       whereClause.name = {
-        [Op.like]: `%${search}%`, // Thay iLike bằng like cho MySQL
-        // Thêm điều kiện collate để tìm kiếm không phân biệt chữ hoa chữ thường
+        [Op.like]: `%${search}%`,
         [Op.collate]: 'utf8_general_ci',
       };
     }
 
-  const { count, rows } = await Order.findAndCountAll({
-    where: whereClause,
-    include: [
-      {
-        model: OrderItem,
-        as: 'orderItems',
-        include: [
-          {
-            model: Product,
-            as: 'product'
-          }
-        ]
-      }
-    ],
-    limit,
-    offset,
-    order: [['createdAt', sort.toUpperCase()]] // ASC hoặc DESC
-  });
+    // Đếm tổng số đơn hàng trước
+    const totalCount = await Order.count({
+      where: whereClause
+    });
 
-  return {
-    totalItems: count,
-    totalPages: Math.ceil(count / limit),
-    currentPage: page,
-    itemsPerPage: limit,
-    orders: rows
-  };
+    console.log('totalCount:', totalCount);
+
+    // Tính toán số trang thực tế
+    const totalPages = Math.ceil(totalCount / limit);
+    
+    // Kiểm tra nếu page vượt quá totalPages
+    if (page > totalPages) {
+      return {
+        totalItems: totalCount,
+        totalPages,
+        currentPage: totalPages, // Trả về trang cuối cùng nếu page yêu cầu vượt quá
+        itemsPerPage: limit,
+        orders: []
+      };
+    }
+
+    const { rows } = await Order.findAndCountAll({
+      where: whereClause,
+      include: [
+        {
+          model: OrderItem,
+          as: 'orderItems',
+          include: [
+            {
+              model: Product,
+              as: 'product'
+            }
+          ]
+        }
+      ],
+      limit,
+      offset,
+      order: [['createdAt', sort.toUpperCase()]]
+    });
+
+    return {
+      totalItems: totalCount,
+      totalPages,
+      currentPage: page,
+      itemsPerPage: limit,
+      orders: rows
+    };
   } catch (error) {
-    console.error(error)
+    console.error("Error in getAllOrdersByAdmin:", error);
+    throw error;
   }
 };
 
@@ -127,6 +148,7 @@ const sendOrderNotificationViaSocket = (order, io, adminSockets) => {
 
 const createOrder = async ({phone, name, items, total}, io, adminSockets) => {
   console.log('Creating new order...');
+  console.log('items:', items);
   
   try {
     // 1. Tạo order
