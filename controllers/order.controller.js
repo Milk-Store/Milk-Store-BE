@@ -27,7 +27,7 @@ const getAllByAdmin = async (req, res) => {
     const limit = parseInt(req.query.limit) || 10;
     const search = req.query.search || null;
     const status = req.query.status || null;
-    const sort = req.query.sort || 'ASC';
+    const sort = req.query.sort || 'DESC';
 
     const result = await orderService.getAllOrdersByAdmin({page, limit, search, sort, status});
     sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, result);

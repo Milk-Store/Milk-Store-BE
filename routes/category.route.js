@@ -32,10 +32,6 @@ router.put(
   auth, 
   isAdmin, 
   upload.single('image'),
-  [
-    body('name').notEmpty().withMessage(MESSAGE.VALIDATION.REQUIRED('Tên danh mục'))
-  ],
-  validate,
   ApiCategoryController.update
 );
 
