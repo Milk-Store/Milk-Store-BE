@@ -19,7 +19,8 @@ const multerConfig = {
     storage: memoryStorage,
     fileFilter,
     limits: {
-        fileSize: 5 * 1024 * 1024, // 5MB - giới hạn kích thước file
+        fileSize: 5 * 1024 * 1024, // 500MB - giới hạn kích thước file
+        fieldSize: 20 * 1024 * 1024, // 20MB
     }
 };
 

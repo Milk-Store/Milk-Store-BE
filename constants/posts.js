@@ -1,0 +1,63 @@
+const POST_STATUS = {
+  DRAFT: 'DRAFT',
+  PUBLISHED: 'PUBLISHED',
+  ARCHIVED: 'ARCHIVED'
+};
+
+const POST_STATUS_LABELS = {
+  [POST_STATUS.DRAFT]: 'Bản nháp',
+  [POST_STATUS.PUBLISHED]: 'Đã xuất bản',
+  [POST_STATUS.ARCHIVED]: 'Đã lưu trữ'
+};
+
+const POST_STATUS_COLORS = {
+  [POST_STATUS.DRAFT]: 'warning',
+  [POST_STATUS.PUBLISHED]: 'success',
+  [POST_STATUS.ARCHIVED]: 'secondary'
+};
+
+const POST_SORT_FIELDS = {
+  CREATED_AT: 'createdAt',
+  UPDATED_AT: 'updatedAt',
+  PUBLISHED_AT: 'publishedAt',
+  TITLE: 'title',
+  VIEW_COUNT: 'viewCount',
+  FEATURED: 'featured'
+};
+
+const POST_SORT_ORDERS = {
+  ASC: 'ASC',
+  DESC: 'DESC'
+};
+
+const POST_DEFAULT_PAGINATION = {
+  PAGE: 1,
+  LIMIT: 10,
+  MAX_LIMIT: 100
+};
+
+const POST_VALIDATION = {
+  TITLE_MIN_LENGTH: 5,
+  TITLE_MAX_LENGTH: 200,
+  CONTENT_MIN_LENGTH: 10,
+  EXCERPT_MAX_LENGTH: 500,
+  META_TITLE_MAX_LENGTH: 60,
+  META_DESCRIPTION_MAX_LENGTH: 160
+};
+
+const POST_IMAGE_VALIDATION = {
+  MAX_SIZE: 5 * 1024 * 1024, // 5MB
+  ALLOWED_TYPES: ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp'],
+  MAX_IMAGES_PER_POST: 20
+};
+
+module.exports = {
+  POST_STATUS,
+  POST_STATUS_LABELS,
+  POST_STATUS_COLORS,
+  POST_SORT_FIELDS,
+  POST_SORT_ORDERS,
+  POST_DEFAULT_PAGINATION,
+  POST_VALIDATION,
+  POST_IMAGE_VALIDATION
+}; 
