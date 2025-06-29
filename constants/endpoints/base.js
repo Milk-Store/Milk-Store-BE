@@ -20,4 +20,5 @@ module.exports = {
   SELLING: "/selling",
   NOTIFICATION: "/notifications",
   POST: "/posts",
+  CHATBOT: "/chatbot",
 };

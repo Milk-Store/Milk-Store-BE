@@ -1,12 +1,70 @@
-const { Post } = require('../models');
+const { Post, User } = require('../models');
+const { Op } = require('sequelize');
+const { 
+  POST_STATUS, 
+  POST_SORT_FIELDS, 
+  POST_SORT_ORDERS, 
+  POST_DEFAULT_PAGINATION 
+} = require('../constants/posts');
 
-const getAllPosts = async () => {
+const getAllPosts = async (query = {}) => {
   try {
-    return await Post.findAll({
-      where: {
-        deletedAt: null
-      }
+    const {
+      page = POST_DEFAULT_PAGINATION.PAGE,
+      limit = POST_DEFAULT_PAGINATION.LIMIT,
+      status,
+      featured,
+      search,
+      sortBy = POST_SORT_FIELDS.CREATED_AT,
+      sortOrder = POST_SORT_ORDERS.DESC
+    } = query;
+
+    const offset = (page - 1) * limit;
+    const whereClause = {
+      deletedAt: null
+    };
+
+    // Filter by status
+    if (status && Object.values(POST_STATUS).includes(status)) {
+      whereClause.status = status;
+    }
+
+    // Filter by featured
+    if (featured !== undefined) {
+      whereClause.featured = featured === 'true';
+    }
+
+    // Search by title or content
+    if (search) {
+      whereClause[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { content: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const { count, rows } = await Post.findAndCountAll({
+      where: whereClause,
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['id', 'name', 'email']
+        },
+      ],
+      order: [[sortBy, sortOrder]],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
     });
+
+    return {
+      posts: rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
+    };
   } catch (error) {
     console.error("Error in getAllPosts:", error);
     throw error;
@@ -19,7 +77,14 @@ const getPostById = async (id) => {
       where: {
         id,
         deletedAt: null
-      }
+      },
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['id', 'name', 'email']
+        },
+      ]
     });
   } catch (error) {
     console.error("Error in getPostById:", error);
@@ -27,13 +92,83 @@ const getPostById = async (id) => {
   }
 }
 
+const getPublishedPosts = async (query = {}) => {
+  try {
+    const {
+      page = POST_DEFAULT_PAGINATION.PAGE,
+      limit = POST_DEFAULT_PAGINATION.LIMIT,
+      featured,
+      search,
+      sortBy = POST_SORT_FIELDS.PUBLISHED_AT,
+      sortOrder = POST_SORT_ORDERS.DESC
+    } = query;
+
+    const offset = (page - 1) * limit;
+    const whereClause = {
+      deletedAt: null,
+      status: POST_STATUS.PUBLISHED
+    };
+
+    // Filter by featured
+    if (featured !== undefined) {
+      whereClause.featured = featured === 'true';
+    }
+
+    // Search by title or excerpt
+    if (search) {
+      whereClause[Op.or] = [
+        { title: { [Op.like]: `%${search}%` } },
+        { excerpt: { [Op.like]: `%${search}%` } }
+      ];
+    }
+
+    const { count, rows } = await Post.findAndCountAll({
+      where: whereClause,
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['id', 'name']
+        }
+      ],
+      order: [[sortBy, sortOrder]],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+
+    return {
+      posts: rows,
+      pagination: {
+        page: parseInt(page),
+        limit: parseInt(limit),
+        total: count,
+        totalPages: Math.ceil(count / limit)
+      }
+    };
+  } catch (error) {
+    console.error("Error in getPublishedPosts:", error);
+    throw error;
+  }
+}
+
 const createPost = async (postData) => {
   try {
-    return await Post.create({
-      ...postData,
+    const { images, ...postFields } = postData;
+    
+    // Set default status if not provided
+    if (!postFields.status) {
+      postFields.status = POST_STATUS.DRAFT;
+    }
+    
+    // Tạo bài viết
+    const post = await Post.create({
+      ...postFields,
       createdAt: new Date(),
       updatedAt: new Date()
     });
+
+    // Trả về bài viết với images
+    return await getPostById(post.id);
   } catch (error) {
     console.error("Error in createPost:", error);
     throw error;
@@ -42,6 +177,8 @@ const createPost = async (postData) => {
 
 const updatePost = async (id, postData) => {
   try {
+    const { images, ...postFields } = postData;
+    
     const post = await Post.findOne({
       where: {
         id,
@@ -53,17 +190,21 @@ const updatePost = async (id, postData) => {
       throw new Error('Post not found');
     }
 
-    return await post.update({
-      ...postData,
+    // Cập nhật bài viết
+    await post.update({
+      ...postFields,
       updatedAt: new Date()
     });
+
+    // Trả về bài viết với images
+    return await getPostById(id);
   } catch (error) {
     console.error("Error in updatePost:", error);
     throw error;
   }
 }
 
-const deletePost = async (id) => {
+const deletePost = async (id) => {  
   try {
     const post = await Post.findOne({
       where: {
@@ -76,12 +217,95 @@ const deletePost = async (id) => {
       throw new Error('Post not found');
     }
 
-    // Soft delete by setting deletedAt
-    return await post.update({
-      deletedAt: new Date()
-    });
+    // Soft delete bài viết
+    await post.destroy({where: {id}})
+
+    return true;
   } catch (error) {
     console.error("Error in deletePost:", error);
+    throw error;
+  }
+}
+
+const updatePostStatus = async (id, status) => {
+  try {
+    const post = await Post.findOne({
+      where: {
+        id,
+        deletedAt: null
+      }
+    });
+
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    // Validate status
+    if (!Object.values(POST_STATUS).includes(status)) {
+      throw new Error('Invalid post status');
+    }
+
+    const updateData = {
+      status,
+      updatedAt: new Date()
+    };
+
+    // Nếu publish, set publishedAt
+    if (status === POST_STATUS.PUBLISHED && post.status !== POST_STATUS.PUBLISHED) {
+      updateData.publishedAt = new Date();
+    }
+
+    await post.update(updateData);
+    return await getPostById(id);
+  } catch (error) {
+    console.error("Error in updatePostStatus:", error);
+    throw error;
+  }
+}
+
+const incrementViewCount = async (id) => {
+  try {
+    const post = await Post.findOne({
+      where: {
+        id,
+        deletedAt: null,
+        status: POST_STATUS.PUBLISHED
+      }
+    });
+
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    await post.increment('viewCount');
+    return await getPostById(id);
+  } catch (error) {
+    console.error("Error in incrementViewCount:", error);
+    throw error;
+  }
+}
+
+const toggleFeatured = async (id) => {
+  try {
+    const post = await Post.findOne({
+      where: {
+        id,
+        deletedAt: null
+      }
+    });
+
+    if (!post) {
+      throw new Error('Post not found');
+    }
+
+    await post.update({
+      featured: !post.featured,
+      updatedAt: new Date()
+    });
+
+    return await getPostById(id);
+  } catch (error) {
+    console.error("Error in toggleFeatured:", error);
     throw error;
   }
 }
@@ -89,7 +313,11 @@ const deletePost = async (id) => {
 module.exports = {
   getAllPosts,
   getPostById,
+  getPublishedPosts,
   createPost,
   updatePost,
-  deletePost
+  deletePost,
+  updatePostStatus,
+  incrementViewCount,
+  toggleFeatured
 }
