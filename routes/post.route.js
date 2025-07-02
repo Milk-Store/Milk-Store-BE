@@ -13,6 +13,9 @@ const ApiPostController = require("../controllers/post.controller");
 router.get(BASE_ENDPOINT.BASE, ApiPostController.getAll);
 router.get(POST_ENDPOINT.PUBLISHED, ApiPostController.getPublished);
 
+// Lấy bài viết theo slug
+router.get(POST_ENDPOINT.SLUG, ApiPostController.getBySlug);
+
 router.get(BASE_ENDPOINT.BY_ID, ApiPostController.getById);
 
 

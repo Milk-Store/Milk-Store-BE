@@ -3,5 +3,6 @@ module.exports = {
     STATUS: "/status",
     FEATURED: "/featured",
     UPLOAD_IMAGE: "/upload-image",
-    GENERATE_AI_CONTENT: "/generate-ai-content"
+    GENERATE_AI_CONTENT: "/generate-ai-content",
+    SLUG: "/slug/:slug"
 };

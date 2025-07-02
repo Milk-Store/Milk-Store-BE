@@ -6,6 +6,7 @@ const {
   POST_SORT_ORDERS, 
   POST_DEFAULT_PAGINATION 
 } = require('../constants/posts');
+const slugify = require('slugify');
 
 const getAllPosts = async (query = {}) => {
   try {
@@ -151,6 +152,20 @@ const getPublishedPosts = async (query = {}) => {
   }
 }
 
+// Hàm sinh slug duy nhất
+async function generateUniqueSlug(title, id = null) {
+  let baseSlug = slugify(title, { lower: true, strict: true });
+  let slug = baseSlug;
+  let count = 1;
+  let where = { slug };
+  if (id) where.id = { [Op.ne]: id };
+  while (await Post.findOne({ where })) {
+    slug = `${baseSlug}-${count++}`;
+    where.slug = slug;
+  }
+  return slug;
+}
+
 const createPost = async (postData) => {
   try {
     const { images, ...postFields } = postData;
@@ -159,6 +174,13 @@ const createPost = async (postData) => {
     if (!postFields.status) {
       postFields.status = POST_STATUS.DRAFT;
     }
+    
+    // Sinh slug
+    let slug = postFields.slug;
+    if (!slug) {
+      slug = await generateUniqueSlug(postFields.title);
+    }
+    postFields.slug = slug;
     
     // Tạo bài viết
     const post = await Post.create({
@@ -189,6 +211,13 @@ const updatePost = async (id, postData) => {
     if (!post) {
       throw new Error('Post not found');
     }
+
+    // Sinh slug nếu có title mới hoặc slug mới
+    let slug = postFields.slug;
+    if (!slug && postFields.title) {
+      slug = await generateUniqueSlug(postFields.title, id);
+    }
+    if (slug) postFields.slug = slug;
 
     // Cập nhật bài viết
     await post.update({
@@ -310,9 +339,31 @@ const toggleFeatured = async (id) => {
   }
 }
 
+const getPostBySlug = async (slug) => {
+  try {
+    return await Post.findOne({
+      where: {
+        slug,
+        deletedAt: null
+      },
+      include: [
+        {
+          model: User,
+          as: 'author',
+          attributes: ['id', 'name', 'email']
+        },
+      ]
+    });
+  } catch (error) {
+    console.error('Error in getPostBySlug:', error);
+    throw error;
+  }
+}
+
 module.exports = {
   getAllPosts,
   getPostById,
+  getPostBySlug,
   getPublishedPosts,
   createPost,
   updatePost,

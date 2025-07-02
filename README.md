@@ -60,6 +60,7 @@ CREATE DATABASE milk_store CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
 npm run init-db
 ```
 
+
 ## Sử dụng
 
 ### Chạy ở môi trường phát triển:
@@ -70,6 +71,11 @@ npm run dev
 ### Chạy ở môi trường production:
 ```bash
 npm start
+```
+
+### Update db migration:
+```bash
+npx sequelize-cli db:migrate
 ```
 
 ## Tài khoản mặc định
