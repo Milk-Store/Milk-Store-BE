@@ -77,6 +77,32 @@ const getById = async (req, res) => {
   }
 };
 
+const getBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+    const post = await postService.getPostBySlug(slug);
+    if (!post) {
+      return sendResponse(
+        res,
+        STATUS.NOT_FOUND,
+        MESSAGE.ERROR.NOT_FOUND,
+        null
+      );
+    }
+    sendResponse(res, STATUS.SUCCESS, MESSAGE.SUCCESS.GET_SUCCESS, post);
+  } catch (error) {
+    console.error('Error in getBySlug post:', error);
+    sendResponse(
+      res,
+      STATUS.SERVER_ERROR,
+      MESSAGE.ERROR.INTERNAL,
+      null,
+      false,
+      true
+    );
+  }
+};
+
 // Admin routes
 const create = async (req, res) => {
   try {
@@ -88,7 +114,8 @@ const create = async (req, res) => {
       metaTitle,
       metaDescription,
       featured = false,
-      images
+      images,
+      slug
     } = req.body;
 
     const thumbnail = req.file;
@@ -110,7 +137,8 @@ const create = async (req, res) => {
       metaDescription,
       featured: featured === 'true' || featured === true,
       createdBy: req.user.id,
-      images: images ? JSON.parse(images) : []
+      images: images ? JSON.parse(images) : [],
+      slug
     };
 
     const newPost = await postService.createPost(postData);
@@ -139,7 +167,8 @@ const update = async (req, res) => {
       metaTitle,
       metaDescription,
       featured,
-      images
+      images,
+      slug
     } = req.body;
 
     const thumbnail = req.file;
@@ -176,7 +205,8 @@ const update = async (req, res) => {
       metaTitle,
       metaDescription,
       featured: featured !== undefined ? (featured === 'true' || featured === true) : undefined,
-      images: images ? JSON.parse(images) : undefined
+      images: images ? JSON.parse(images) : undefined,
+      slug
     };
 
     const updatedPost = await postService.updatePost(id, postData);
@@ -349,6 +379,7 @@ const ApiPostController = {
   getAll,
   getPublished,
   getById,
+  getBySlug,
   
   // Admin routes
   create,

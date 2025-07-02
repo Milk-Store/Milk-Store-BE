@@ -28,6 +28,11 @@ module.exports = (sequelize, DataTypes) => {
         notEmpty: true
       }
     },
+    slug: {
+      type: DataTypes.STRING,
+      allowNull: true,
+      unique: true
+    },
     content: {
       type: DataTypes.TEXT,
       allowNull: false
